@@ -60,7 +60,7 @@ async function startFilter() {
             tbody.appendChild(tr);
 
             try {
-                let res = await fetch('/api/index/filter', {
+                let res = await fetch('/filter', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({usn: usn, ip: ip})
