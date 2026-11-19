@@ -23,9 +23,6 @@ HTML_PAGE = """
     .bad { color: #f85149; font-weight: bold; }
     .warn { color: #d29922; font-weight: bold; }
     .rap { color: #a371f7; font-weight: bold; }
-    .item-tag { background-color: #1f6feb; color: white; padding: 2px 5px; border-radius: 3px; font-size: 10px; margin-right: 2px; display: inline-block; margin-bottom: 2px;}
-    .item-tag.korles { background-color: #3fb950; color: black; font-weight: bold; }
-    .item-tag.death { background-color: #a371f7; color: white; font-weight: bold; }
     img { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #30363d; }
 </style>
 </head>
@@ -37,7 +34,7 @@ HTML_PAGE = """
 <button onclick="startFilter()">Mulai Filter</button>
 <table id="resTable">
     <thead>
-        <tr><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th><th>Avatar</th><th>Item Spesifik</th><th>RAP / Ltd</th></tr>
+        <tr><th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th><th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th></tr>
     </thead>
     <tbody id="tbody"></tbody>
 </table>
@@ -48,6 +45,8 @@ async function startFilter() {
     const tbody = document.getElementById('tbody');
     tbody.innerHTML = '';
 
+    let rowNum = 1;
+
     for (let line of lines) {
         let parts = line.split(':');
         if(parts.length >= 3) {
@@ -56,7 +55,7 @@ async function startFilter() {
             let ip = parts[2].trim();
             
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${usn}</td><td>${pw}</td><td>Proses...</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
+            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Proses...</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
             tbody.appendChild(tr);
 
             try {
@@ -69,28 +68,22 @@ async function startFilter() {
                 let data = await res.json();
                 
                 if (data.status === 'Not Found') {
-                    tr.innerHTML = `<td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td class="bad">Not Found</td><td>-</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td class="bad">No</td><td class="bad">No</td><td>-</td>`;
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}">` : 'N/A';
                     
-                    let itemsHtml = '';
-                    if (data.items.length > 0) {
-                        data.items.forEach(item => {
-                            if(item === 'Korles') itemsHtml += `<span class="item-tag korles">${item}</span>`;
-                            else if(item === 'Deathwalker') itemsHtml += `<span class="item-tag death">${item}</span>`;
-                            else itemsHtml += `<span class="item-tag">${item}</span>`;
-                        });
-                    } else {
-                        itemsHtml = `<span class="bad">No</span>`;
-                    }
+                    let korbloxTag = data.korblox ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
+                    let korlesTag = data.korles ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
                     
                     let rapText = data.rap > 0 ? `<span class="rap">${data.rap}</span> / ${data.limiteds}` : `<span class="warn">Priv/None</span>`;
 
-                    tr.innerHTML = `<td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${itemsHtml}</td><td>${rapText}</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td>`;
                 }
             } catch (e) {
-                tr.innerHTML = `<td>${usn}</td><td>${pw}</td><td>Error</td><td>-</td><td>N/A</td><td class="bad">Error</td><td>-</td>`;
+                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Error</td><td>-</td><td>N/A</td><td class="bad">Error</td><td class="bad">Error</td><td>-</td>`;
             }
+            
+            rowNum++;
         }
     }
 }
@@ -101,7 +94,6 @@ async function startFilter() {
 
 HEADLESS_ID = 134330133
 KORBLOX_IDS = [139607718, 139607917, 2988500]
-DEATHWALKER_IDS = [2988502, 2988503, 2988504]
 
 @app.route('/')
 def index():
@@ -155,7 +147,6 @@ def filter_account():
         
         has_headless = False
         has_korblox = False
-        has_deathwalker = False
         
         if avatar_req.status_code == 200:
             assets = avatar_req.json().get('assets', [])
@@ -165,8 +156,6 @@ def filter_account():
                     has_headless = True
                 if asset_id in KORBLOX_IDS:
                     has_korblox = True
-                if asset_id in DEATHWALKER_IDS:
-                    has_deathwalker = True
                     
         time.sleep(0.2)
         
@@ -190,23 +179,14 @@ def filter_account():
                     ltd_val = roli_data.get('num_limiteds', 0)
         except Exception:
             pass
-            
-        found_items = []
-        if has_headless and has_korblox:
-            found_items.append("Korles")
-        else:
-            if has_headless: found_items.append("Headless")
-            if has_korblox: found_items.append("Korblox")
-            
-        if has_deathwalker:
-            found_items.append("Deathwalker")
                 
         return jsonify({
             'status': 'Found',
             'country': country_name,
             'created': created_date,
             'avatar': avatar_url,
-            'items': found_items,
+            'korblox': has_korblox,
+            'korles': has_korblox and has_headless,
             'rap': rap_val,
             'limiteds': ltd_val
         })
