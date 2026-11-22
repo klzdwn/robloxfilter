@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template_string
 import requests
 import time
 import rolimons
-import ipaddress  # <-- Wajib ada untuk ngecek format IP
 
 app = Flask(__name__)
 
@@ -542,26 +541,24 @@ def filter_account():
         'Accept': 'application/json'
     })
     
-    # --- DETEKSI IP (IPv4 & IPv6) ---
+    # --- DETEKSI IP (Pakai ipwho.is yang support IPv6) ---
     country_name = "Unknown"
     if ip_addr:
         try:
-            # Cek apakah formatnya valid (IPv4 atau IPv6)
-            ip_obj = ipaddress.ip_address(ip_addr)
+            ip_addr = ip_addr.strip().rstrip('.')
             
-            # Jika IP lokal (misal dari WiFi) kasih keterangan
-            if ip_obj.is_private:
-                country_name = "Private IP"
-            else:
-                # Pakai API ip-api.com (lebih stabil untuk IPv4)
-                ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
-                if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
-                    country_name = ip_req.json().get('country', 'Unknown')
+            # ipwho.is mendukung IPv4 dan IPv6
+            ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
+            
+            if ip_req.status_code == 200:
+                req_json = ip_req.json()
+                if req_json.get('success'):
+                    country_name = req_json.get('country', 'Unknown')
                 else:
                     country_name = "Not Found"
-                    
-        except ValueError:
-            country_name = "Invalid IP"
+            else:
+                country_name = "API Error"
+                
         except Exception:
             country_name = "IP Error"
     
