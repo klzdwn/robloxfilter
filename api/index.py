@@ -541,21 +541,23 @@ def filter_account():
         'Accept': 'application/json'
     })
     
-    # --- DETEKSI IP (Pakai ipwho.is yang support IPv6) ---
+    # --- DETEKSI IP PAKAI IP-API.COM (VERSI HTTP) ---
     country_name = "Unknown"
     if ip_addr:
         try:
+            # Bersihkan spasi atau titik aneh di awal/akhir
             ip_addr = ip_addr.strip().rstrip('.')
             
-            # ipwho.is mendukung IPv4 dan IPv6
-            ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
+            # Panggil API ip-api.com (versi HTTP)
+            ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,message,country', timeout=5)
             
             if ip_req.status_code == 200:
                 req_json = ip_req.json()
-                if req_json.get('success'):
+                if req_json.get('status') == 'success':
                     country_name = req_json.get('country', 'Unknown')
                 else:
-                    country_name = "Not Found"
+                    # Jika API bilang gagal, ambil pesan errornya (misal: private range)
+                    country_name = req_json.get('message', 'Not Found')
             else:
                 country_name = "API Error"
                 
