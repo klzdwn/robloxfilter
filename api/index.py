@@ -106,7 +106,7 @@ HTML_PAGE = """
         }
     }
 
-    /* --- STYLING CARD --- */
+    /* --- STYLING CARD BARU (2 BARIS) --- */
     .card {
         background: var(--panel-bg);
         border: 1px solid var(--border-color);
@@ -120,12 +120,36 @@ HTML_PAGE = """
     }
     .card:hover { border-color: #475569; transform: translateY(-2px); }
 
-    .card-header {
+    /* Baris Atas: Text Info */
+    .card-top-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
+    }
+    .top-main-info {
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .top-sub-info {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .top-sub-info span { color: #cbd5e1; font-weight: 500;}
+
+    /* Baris Bawah: Profile & Badges */
+    .card-bottom-row {
         display: flex;
         align-items: center;
         gap: 15px;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 12px;
     }
 
     .card-avatar {
@@ -135,40 +159,25 @@ HTML_PAGE = """
         border: 2px solid var(--border-color);
         object-fit: cover;
         background: #0b1120;
+        flex-shrink: 0;
     }
-
-    .card-user-info { flex: 1; overflow: hidden; }
-    .card-username { font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-password { font-size: 12px; color: var(--text-muted); margin-top: 3px; font-family: monospace; }
-
-    .card-body {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-    
-    .info-box { background: #0b1120; padding: 8px 12px; border-radius: 8px; border: 1px solid #1e293b; }
-    .info-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .info-value { font-size: 13px; font-weight: 600; margin-top: 2px; color: #cbd5e1; }
-    .info-value.rap-val { color: var(--purple); }
-    .info-value.warn { color: var(--warning); }
 
     .card-footer {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-top: auto; /* Dorong ke bawah */
+        gap: 6px;
+        flex: 1;
     }
 
     /* --- BADGES (Stiker Status) --- */
     .status-item {
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 12px;
+        gap: 4px;
+        font-size: 11px;
         font-weight: 600;
         background: #0b1120;
-        padding: 6px 10px;
+        padding: 4px 8px;
         border-radius: 6px;
         border: 1px solid var(--border-color);
     }
@@ -177,10 +186,11 @@ HTML_PAGE = """
     /* Warna Badge */
     .badge-yes { color: var(--success); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); }
     .badge-no { color: var(--danger); border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
+    .badge-rap { color: var(--purple); border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); }
     
     /* Loading & Error State */
     .loading-box { text-align: center; padding: 20px; color: var(--warning); font-style: italic; font-size: 14px; }
-    .error-box { color: var(--danger); font-weight: bold; }
+    .error-box { color: var(--danger); font-weight: bold; font-size: 13px; margin-top: 5px;}
 
 </style>
 </head>
@@ -224,14 +234,14 @@ async function startFilter() {
             let card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
-                <div class="card-header">
-                    <div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">⏳</div>
-                    <div class="card-user-info">
-                        <div class="card-username">${usn}</div>
-                        <div class="card-password">${pw}</div>
-                    </div>
+                <div class="card-top-row">
+                    <div class="top-main-info">${usn} : ${pw} : ${ip}</div>
+                    <div class="top-sub-info">Mengecek data...</div>
                 </div>
-                <div class="loading-box">Mengecek data & inventory...</div>
+                <div class="card-bottom-row">
+                    <div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">⏳</div>
+                    <div class="loading-box" style="padding:0; text-align:left;">Memuat inventory...</div>
+                </div>
             `;
             resultsContainer.appendChild(card);
 
@@ -246,63 +256,48 @@ async function startFilter() {
                 
                 if (data.status === 'Not Found') {
                     card.innerHTML = `
-                        <div class="card-header">
-                            <div class="card-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger);">X</div>
-                            <div class="card-user-info">
-                                <div class="card-username">${usn}</div>
-                                <div class="card-password">${pw}</div>
-                            </div>
+                        <div class="card-top-row">
+                            <div class="top-main-info">${usn} : ${pw} : ${ip}</div>
+                            <div class="top-sub-info" style="color:var(--danger);">Username tidak ditemukan (Banned/Email)</div>
                         </div>
-                        <div class="error-box">Username tidak ditemukan karena pakai email</div>
+                        <div class="card-bottom-row">
+                            <div class="card-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger);">X</div>
+                        </div>
                     `;
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}" class="card-avatar" loading="lazy">` : `<div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
                     
-                    // Fungsi Helper untuk Badge
-                    const getBadge = (status) => status 
-                        ? `<div class="status-item badge-yes">Yes</div>` 
-                        : `<div class="status-item badge-no">No</div>`;
-
-                    let rapHtml = data.rap > 0 
-                        ? `<div class="info-value rap-val">${data.rap.toLocaleString()} / ${data.limiteds}</div>` 
-                        : `<div class="info-value warn">Priv / None</div>`;
+                    // Format RAP
+                    let rapText = data.rap > 0 ? `${data.rap.toLocaleString()} RAP / ${data.limiteds} Ltd` : `Priv / None`;
+                    let rapClass = data.rap > 0 ? 'badge-rap' : 'badge-no';
 
                     card.innerHTML = `
-                        <div class="card-header">
-                            ${imgTag}
-                            <div class="card-user-info">
-                                <div class="card-username">${usn}</div>
-                                <div class="card-password">${pw}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="card-body">
-                            <div class="info-box">
-                                <div class="info-label">Negara</div>
-                                <div class="info-value">${data.country}</div>
-                            </div>
-                            <div class="info-box">
-                                <div class="info-label">Dibuat</div>
-                                <div class="info-value">${data.created}</div>
-                            </div>
-                            <div class="info-box" style="grid-column: span 2;">
-                                <div class="info-label">RAP / Limiteds</div>
-                                ${rapHtml}
+                        <!-- BARIS ATAS: USN, PW, IP, TANGGAL -->
+                        <div class="card-top-row">
+                            <div class="top-main-info" title="${usn}:${pw}:${ip}">${usn} : ${pw} : ${ip}</div>
+                            <div class="top-sub-info">
+                                <div>Negara: <span>${data.country}</span></div>
+                                <div>Dibuat: <span>${data.created}</span></div>
+                                <div>RAP: <span style="color:var(--purple)">${rapText}</span></div>
                             </div>
                         </div>
 
-                        <div class="card-footer">
-                            <div class="status-item ${data.korblox ? 'badge-yes' : 'badge-no'}"><span>Korblox:</span> ${data.korblox ? 'Yes' : 'No'}</div>
-                            <div class="status-item ${data.korles ? 'badge-yes' : 'badge-no'}"><span>Korles:</span> ${data.korles ? 'Yes' : 'No'}</div>
-                            <div class="status-item ${data.malivinus ? 'badge-yes' : 'badge-no'}"><span>Malivinus:</span> ${data.malivinus ? 'Yes' : 'No'}</div>
-                            <div class="status-item ${data.crown_8bit ? 'badge-yes' : 'badge-no'}"><span>8Bit Crown:</span> ${data.crown_8bit ? 'Yes' : 'No'}</div>
+                        <!-- BARIS BAWAH: PROFILE & BADGES -->
+                        <div class="card-bottom-row">
+                            ${imgTag}
+                            <div class="card-footer">
+                                <div class="status-item ${data.korblox ? 'badge-yes' : 'badge-no'}"><span>Korblox:</span> ${data.korblox ? 'Yes' : 'No'}</div>
+                                <div class="status-item ${data.korles ? 'badge-yes' : 'badge-no'}"><span>Korles:</span> ${data.korles ? 'Yes' : 'No'}</div>
+                                <div class="status-item ${data.malivinus ? 'badge-yes' : 'badge-no'}"><span>Malivinus:</span> ${data.malivinus ? 'Yes' : 'No'}</div>
+                                <div class="status-item ${data.crown_8bit ? 'badge-yes' : 'badge-no'}"><span>8Bit Crown:</span> ${data.crown_8bit ? 'Yes' : 'No'}</div>
+                            </div>
                         </div>
                     `;
                 }
             } catch (e) {
                 card.innerHTML = `
-                    <div class="card-header">
-                        <div class="card-username">${usn}</div>
+                    <div class="card-top-row">
+                        <div class="top-main-info">${usn} : ${pw} : ${ip}</div>
                     </div>
                     <div class="error-box">Terjadi kesalahan jaringan.</div>
                 `;
@@ -416,18 +411,17 @@ def filter_account():
         
         time.sleep(0.2)
         
-        # --- BAGIAN RAP ROLIMONS DENGAN LIBRARY (Cuma ini yang diganti) ---
+        # --- BAGIAN RAP ROLIMONS DENGAN LIBRARY ---
         rap_val = 0
         ltd_val = 0
         try:
-            # Nembak pakai library rolimons
             player_info = rolimons.player.get_player_info(user_id)
             
             if player_info and 'rap' in player_info:
                 rap_val = player_info['rap']
                 ltd_val = player_info.get('num_limiteds', 0)
         except Exception as e:
-            print(f"Log Error RAP: {e}") # Biar kelihatan di Vercel Logs
+            print(f"Log Error RAP: {e}") 
         # -------------------------------------------------------------------
                 
         return jsonify({
