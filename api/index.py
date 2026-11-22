@@ -43,7 +43,7 @@ HTML_PAGE = """
 
     .container {
         width: 100%;
-        max-width: 1200px;
+        max-width: 1000px;
     }
 
     .header { margin-bottom: 20px; }
@@ -55,7 +55,8 @@ HTML_PAGE = """
         padding: 15px;
         border-radius: 12px;
         border: 1px solid var(--border-color);
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
     textarea { 
@@ -77,87 +78,109 @@ HTML_PAGE = """
         background-color: var(--primary); 
         color: white; 
         border: none; 
-        padding: 12px 20px; 
+        padding: 14px 20px; 
         cursor: pointer; 
         font-weight: 600; 
         margin-top: 12px; 
         width: 100%; 
         border-radius: 8px; 
         font-family: 'Inter', sans-serif;
-        font-size: 14px;
+        font-size: 15px;
         transition: background-color 0.2s, transform 0.1s;
     }
     button:hover:not(:disabled) { background-color: var(--primary-hover); }
     button:active:not(:disabled) { transform: scale(0.98); }
     button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
 
-    .table-wrapper {
-        width: 100%;
-        overflow-x: auto;
+    /* --- LAYOUT GRID UNTUK CARD --- */
+    .results-grid {
+        display: grid;
+        grid-template-columns: 1fr; /* Mobile: 1 kolom */
+        gap: 15px;
+    }
+
+    @media (min-width: 768px) {
+        .results-grid {
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); /* PC: Grid */
+        }
+    }
+
+    /* --- STYLING CARD --- */
+    .card {
         background: var(--panel-bg);
-        border-radius: 12px;
         border: 1px solid var(--border-color);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        transition: transform 0.2s, border-color 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .card:hover { border-color: #475569; transform: translateY(-2px); }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
     }
 
-    /* Scrollbar kustom */
-    .table-wrapper::-webkit-scrollbar { height: 8px; }
-    .table-wrapper::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 4px; }
-    .table-wrapper::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-    .table-wrapper::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-    table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        font-size: 13px; 
-        white-space: nowrap; /* Mencegah teks turun ke bawah */
-    }
-
-    th, td { 
-        padding: 12px 15px; 
-        text-align: left; 
-        border-bottom: 1px solid var(--border-color); 
-    }
-
-    th { 
-        background-color: #0b1120; 
-        color: var(--text-muted);
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 0.5px;
-    }
-
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
-
-    /* Styling untuk status Yes/No */
-    .badge {
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        display: inline-block;
-        text-align: center;
-        min-width: 45px;
-    }
-    .badge-yes { background-color: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-no { background-color: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge-warn { background-color: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
-    
-    .rap-text { color: var(--purple); font-weight: 600; }
-    
-    img { 
-        width: 38px; 
-        height: 38px; 
-        border-radius: 50%; 
-        border: 2px solid var(--border-color); 
+    .card-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid var(--border-color);
         object-fit: cover;
-        display: block;
+        background: #0b1120;
     }
 
-    /* Animasi Loading */
-    .loading-text { color: var(--warning); font-style: italic; font-size: 12px; }
+    .card-user-info { flex: 1; overflow: hidden; }
+    .card-username { font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-password { font-size: 12px; color: var(--text-muted); margin-top: 3px; font-family: monospace; }
+
+    .card-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .info-box { background: #0b1120; padding: 8px 12px; border-radius: 8px; border: 1px solid #1e293b; }
+    .info-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-value { font-size: 13px; font-weight: 600; margin-top: 2px; color: #cbd5e1; }
+    .info-value.rap-val { color: var(--purple); }
+    .info-value.warn { color: var(--warning); }
+
+    .card-footer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: auto; /* Dorong ke bawah */
+    }
+
+    /* --- BADGES (Stiker Status) --- */
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #0b1120;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+    }
+    .status-item span { color: var(--text-muted); font-weight: 400; }
+
+    /* Warna Badge */
+    .badge-yes { color: var(--success); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); }
+    .badge-no { color: var(--danger); border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
+    
+    /* Loading & Error State */
+    .loading-box { text-align: center; padding: 20px; color: var(--warning); font-style: italic; font-size: 14px; }
+    .error-box { color: var(--danger); font-weight: bold; }
+
 </style>
 </head>
 <body>
@@ -173,35 +196,21 @@ HTML_PAGE = """
         <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
     </div>
 
-    <div class="table-wrapper">
-        <table id="resTable">
-            <thead>
-                <tr>
-                    <th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th>
-                    <th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th>
-                    <th>Malivinus</th><th>8Bit Crown</th>
-                </tr>
-            </thead>
-            <tbody id="tbody">
-                <!-- Data akan masuk ke sini -->
-            </tbody>
-        </table>
-    </div>
+    <!-- Container untuk Card -->
+    <div id="results" class="results-grid"></div>
 </div>
 
 <script>
 async function startFilter() {
     const btn = document.getElementById('filterBtn');
     const lines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
-    const tbody = document.getElementById('tbody');
+    const resultsContainer = document.getElementById('results');
     
     if(lines.length === 0) return alert("Masukkan data terlebih dahulu!");
     
-    tbody.innerHTML = '';
+    resultsContainer.innerHTML = '';
     btn.disabled = true;
     btn.innerText = "Memproses...";
-
-    let rowNum = 1;
 
     for (let line of lines) {
         let parts = line.split(':');
@@ -210,10 +219,20 @@ async function startFilter() {
             let pw = parts[1].trim();
             let ip = parts[2].trim();
             
-            let tr = document.createElement('tr');
-            // Render baris loading
-            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td colspan="8" class="loading-text">Mengecek data...</td>`;
-            tbody.appendChild(tr);
+            // Buat Card Loading
+            let card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">⏳</div>
+                    <div class="card-user-info">
+                        <div class="card-username">${usn}</div>
+                        <div class="card-password">${pw}</div>
+                    </div>
+                </div>
+                <div class="loading-box">Mengecek data & inventory...</div>
+            `;
+            resultsContainer.appendChild(card);
 
             try {
                 let res = await fetch('/filter', {
@@ -225,24 +244,68 @@ async function startFilter() {
                 let data = await res.json();
                 
                 if (data.status === 'Not Found') {
-                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td><span class="badge badge-no">No</span></td><td><span class="badge badge-no">No</span></td><td>-</td><td><span class="badge badge-no">No</span></td><td><span class="badge badge-no">No</span></td>`;
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <div class="card-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger);">X</div>
+                            <div class="card-user-info">
+                                <div class="card-username">${usn}</div>
+                                <div class="card-password">${pw}</div>
+                            </div>
+                        </div>
+                        <div class="error-box">Username tidak ditemukan / Banned.</div>
+                    `;
                 } else {
-                    let imgTag = data.avatar ? `<img src="${data.avatar}" loading="lazy">` : 'N/A';
+                    let imgTag = data.avatar ? `<img src="${data.avatar}" class="card-avatar" loading="lazy">` : `<div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
                     
-                    let korbloxTag = data.korblox ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
-                    let korlesTag = data.korles ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
-                    let malivinusTag = data.malivinus ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
-                    let crownTag = data.crown_8bit ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
+                    // Fungsi Helper untuk Badge
+                    const getBadge = (status) => status 
+                        ? `<div class="status-item badge-yes">Yes</div>` 
+                        : `<div class="status-item badge-no">No</div>`;
 
-                    let rapText = data.rap > 0 ? `<span class="rap-text">${data.rap.toLocaleString()}</span> / ${data.limiteds}` : `<span class="badge badge-warn">Priv/None</span>`;
+                    let rapHtml = data.rap > 0 
+                        ? `<div class="info-value rap-val">${data.rap.toLocaleString()} / ${data.limiteds}</div>` 
+                        : `<div class="info-value warn">Priv / None</div>`;
 
-                    tr.innerHTML = `<td>${rowNum}</td><td style="font-weight:600;">${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td><td>${malivinusTag}</td><td>${crownTag}</td>`;
+                    card.innerHTML = `
+                        <div class="card-header">
+                            ${imgTag}
+                            <div class="card-user-info">
+                                <div class="card-username">${usn}</div>
+                                <div class="card-password">${pw}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <div class="info-box">
+                                <div class="info-label">Negara</div>
+                                <div class="info-value">${data.country}</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-label">Dibuat</div>
+                                <div class="info-value">${data.created}</div>
+                            </div>
+                            <div class="info-box" style="grid-column: span 2;">
+                                <div class="info-label">RAP / Limiteds</div>
+                                ${rapHtml}
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="status-item ${data.korblox ? 'badge-yes' : 'badge-no'}"><span>Korblox:</span> ${data.korblox ? 'Yes' : 'No'}</div>
+                            <div class="status-item ${data.korles ? 'badge-yes' : 'badge-no'}"><span>Korles:</span> ${data.korles ? 'Yes' : 'No'}</div>
+                            <div class="status-item ${data.malivinus ? 'badge-yes' : 'badge-no'}"><span>Malivinus:</span> ${data.malivinus ? 'Yes' : 'No'}</div>
+                            <div class="status-item ${data.crown_8bit ? 'badge-yes' : 'badge-no'}"><span>8Bit Crown:</span> ${data.crown_8bit ? 'Yes' : 'No'}</div>
+                        </div>
+                    `;
                 }
             } catch (e) {
-                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td colspan="8" style="color:var(--danger);">Terjadi kesalahan sistem.</td>`;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-username">${usn}</div>
+                    </div>
+                    <div class="error-box">Terjadi kesalahan jaringan.</div>
+                `;
             }
-            
-            rowNum++;
         }
     }
     
