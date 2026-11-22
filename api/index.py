@@ -541,23 +541,27 @@ def filter_account():
         'Accept': 'application/json'
     })
     
-    # --- DETEKSI IP PAKAI IP-API.COM (VERSI HTTP) ---
+    # --- DETEKSI IP (Pakai ipinfo.io) ---
     country_name = "Unknown"
     if ip_addr:
         try:
-            # Bersihkan spasi atau titik aneh di awal/akhir
             ip_addr = ip_addr.strip().rstrip('.')
             
-            # Panggil API ip-api.com (versi HTTP)
-            ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,message,country', timeout=5)
+            # ipinfo.io sangat jarang memblokir request otomatis
+            ip_req = requests.get(f'https://ipinfo.io/{ip_addr}/json', timeout=5)
             
             if ip_req.status_code == 200:
                 req_json = ip_req.json()
-                if req_json.get('status') == 'success':
-                    country_name = req_json.get('country', 'Unknown')
+                country_code = req_json.get('country', 'Unknown')
+                
+                # ipinfo.io memberikan kode negara (ID, US, dll) atau 'bogon' jika IP lokal
+                if country_code == 'bogon':
+                    country_name = "IP Lokal"
+                elif country_code != 'Unknown':
+                    # Ubah kode negara jadi nama (opsional, biar jelas)
+                    country_name = country_code 
                 else:
-                    # Jika API bilang gagal, ambil pesan errornya (misal: private range)
-                    country_name = req_json.get('message', 'Not Found')
+                    country_name = "Not Found"
             else:
                 country_name = "API Error"
                 
