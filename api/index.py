@@ -51,6 +51,7 @@ HTML_PAGE = """
     .header h2 { font-size: 20px; font-weight: 700; color: #fff; }
     .header p { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
 
+    /* Input Group */
     .input-group {
         background: var(--panel-bg);
         padding: 12px;
@@ -108,6 +109,12 @@ HTML_PAGE = """
     .btn-success { background-color: var(--success); }
     .btn-success:hover:not(:disabled) { background-color: #059669; }
 
+    .btn-save { background-color: #8b5cf6; }
+    .btn-save:hover:not(:disabled) { background-color: #7c3aed; }
+
+    .btn-secondary { background-color: #475569; }
+    .btn-secondary:hover:not(:disabled) { background-color: #334155; }
+
     input[type="file"] { display: none; }
 
     .warning-text {
@@ -152,11 +159,7 @@ HTML_PAGE = """
         white-space: nowrap; 
     }
 
-    th.col-ip { 
-        text-align: center; 
-        padding-left: 15px; 
-    }
-
+    th.col-ip { text-align: center; padding-left: 15px; }
     tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
     .col-num { width: 20px; text-align: center; color: var(--text-muted); }
@@ -165,33 +168,19 @@ HTML_PAGE = """
     .col-usn { font-weight: 600; color: #fff; word-break: break-all; max-width: 80px;}
     .col-pw { color: var(--text-muted); word-break: break-all; max-width: 70px;}
     .col-ip { color: var(--warning); max-width: 60px; word-break: break-word; text-align: center;}
-    
     .col-status { min-width: 100px; line-height: 1.3;}
     .status-line { display: block; white-space: nowrap; font-size: 10px;}
     .status-label { color: var(--text-muted); }
-    
     .col-rap { text-align: right; font-weight: bold; white-space: nowrap;}
 
     .txt-yes { color: var(--success); font-weight: 700; }
     .txt-no { color: var(--danger); }
     .txt-rap { color: var(--purple); }
-    
-    .txt-error { 
-        color: var(--danger); 
-        font-style: italic; 
-        font-weight: 500;
-        font-size: 10px;
-    }
+    .txt-error { color: var(--danger); font-style: italic; font-weight: 500; font-size: 10px; }
 
-    .date-mobile { 
-        display: block; 
-        font-size: 9px; 
-        color: var(--text-muted); 
-        margin-top: 3px; 
-        font-weight: 400;
-        white-space: nowrap;
-    }
+    .date-mobile { display: block; font-size: 9px; color: var(--text-muted); margin-top: 3px; font-weight: 400; white-space: nowrap; }
 
+    /* Sembunyikan kolom created di HP */
     .col-date { display: none; }
     @media (min-width: 600px) {
         .col-date { display: table-cell; color: var(--text-muted); }
@@ -202,6 +191,7 @@ HTML_PAGE = """
         .date-mobile { display: none; } 
     }
 
+    /* Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
@@ -227,7 +217,8 @@ HTML_PAGE = """
 </head>
 <body>
 
-<div class="container">
+<!-- HALAMAN UTAMA (FILTER) -->
+<div id="mainPage" class="container">
     <div class="header">
         <h2>R0bl0x F1lt3r</h2>
         <p>Format Input: <b>usn:pw:ip</b></p>
@@ -236,13 +227,19 @@ HTML_PAGE = """
     <div class="input-group">
         <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
         
-        <div class="btn-grid">
+        <div class="btn-grid" style="margin-bottom: 8px;">
             <label for="fileInput" class="btn-upload">📁 Upload .txt</label>
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
             
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
+        </div>
+
+        <div class="btn-grid">
             <button id="pauseBtn" class="btn-warning" onclick="pauseFilter()" disabled>Jeda</button>
             <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
+            <!-- Tombol Simpan dan Pindah Halaman -->
+            <button class="btn-save" onclick="saveAndRedirect()">💾 Simpan & Lihat Riwayat</button>
+            <button class="btn-secondary" onclick="toggleHistoryPage()">📂 Halaman Riwayat</button>
         </div>
 
         <div class="warning-text">
@@ -270,6 +267,33 @@ HTML_PAGE = """
     </div>
 </div>
 
+<!-- HALAMAN RIWAYAT (TERPISAH) -->
+<div id="historyPage" class="container" style="display: none;">
+    <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2>📂 Riwayat Filter</h2>
+        <button class="btn-secondary" style="width: auto; padding: 6px 15px;" onclick="toggleHistoryPage()">⬅️ Kembali</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th class="col-num">#</th>
+                    <th class="col-avatar">PFP</th>
+                    <th class="col-usn">USN</th>
+                    <th class="col-pw">PW</th>
+                    <th class="col-ip">Negara</th>
+                    <th class="col-date">Created</th>
+                    <th class="col-status">Status Item</th>
+                    <th class="col-rap">RAP</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Pop-up -->
 <div class="modal-overlay" id="customModal">
     <div class="modal-box">
         <div class="modal-icon">⚠️</div>
@@ -287,15 +311,19 @@ let currentAbortController = null;
 
 let currentLines = [];
 let currentIndex = 0;
+let savedResults = []; 
+
+// Saat halaman dimuat, cek apakah ada data tersimpan
+window.onload = function() {
+    let stored = localStorage.getItem('robloxFilterHistory');
+    if (stored) {
+        savedResults = JSON.parse(stored);
+    }
+}
 
 document.addEventListener("visibilitychange", function() {
-    if (document.hidden) { 
-        isPaused = true; 
-    } else { 
-        if (!isStopped) {
-            isPaused = false; 
-        }
-    }
+    if (document.hidden) { isPaused = true; } 
+    else { if (!isStopped) { isPaused = false; } }
 });
 
 function showModal(title, message) {
@@ -348,22 +376,12 @@ function updateButtons() {
         btnFilter.disabled = true;
         btnFilter.innerText = "Proses...";
         btnPause.disabled = isPaused; 
-        
-        if (isPaused) {
-            btnResume.disabled = false; 
-        } else {
-            btnResume.disabled = true;
-        }
+        btnResume.disabled = !isPaused;
     } else {
         btnFilter.disabled = false;
         btnFilter.innerText = "Mulai Filter";
         btnPause.disabled = true;
-        
-        if (currentIndex < currentLines.length) {
-            btnResume.disabled = false;
-        } else {
-            btnResume.disabled = true;
-        }
+        btnResume.disabled = (currentIndex >= currentLines.length);
     }
 }
 
@@ -382,6 +400,7 @@ function startFilter() {
     isPaused = false;
     isProcessing = true;
     currentAbortController = null;
+    savedResults = []; // Reset sesi sementara
     
     updateButtons();
     processQueue();
@@ -392,26 +411,19 @@ async function processQueue() {
 
     for (let i = currentIndex; i < currentLines.length; i++) {
         currentIndex = i; 
-
         if (!isProcessing) break; 
-
-        while (isPaused && isProcessing) {
-            await new Promise(resolve => setTimeout(resolve, 500)); 
-        }
+        while (isPaused && isProcessing) { await new Promise(resolve => setTimeout(resolve, 500)); }
         if (!isProcessing) break; 
 
         let line = currentLines[i];
-        
-        // --- PEMISAHAN USN, PW, IP (Mendukung IPv6) ---
         let firstColon = line.indexOf(':');
         let secondColon = line.indexOf(':', firstColon + 1);
         
         if(firstColon !== -1 && secondColon !== -1) {
             let usn = line.substring(0, firstColon).trim();
             let pw = line.substring(firstColon + 1, secondColon).trim();
-            let ip = line.substring(secondColon + 1).trim(); // Ambil semua sisa teks sebagai IP
+            let ip = line.substring(secondColon + 1).trim();
             let numStr = (i + 1).toString(); 
-            
             let isEmail = usn.includes('@'); 
 
             let tr = document.createElement('tr');
@@ -447,6 +459,7 @@ async function processQueue() {
                         <td class="col-pw">${pw}</td>
                         <td colspan="4" class="txt-error">${errorMsg}</td>
                     `;
+                    savedResults.push({num: numStr, usn: usn, pw: pw, is_error: true, error_msg: errorMsg});
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}">` : `-`;
                     
@@ -469,14 +482,18 @@ async function processQueue() {
                         <td class="col-avatar">${imgTag}</td>
                         <td class="col-usn">${usn}</td>
                         <td class="col-pw">${pw}</td>
-                        <td class="col-ip">
-                            ${data.country}
-                            <span class="date-mobile">${data.created}</span>
-                        </td>
+                        <td class="col-ip">${data.country}<span class="date-mobile">${data.created}</span></td>
                         <td class="col-date">${data.created}</td>
                         <td class="col-status">${statusHtml}</td>
                         <td class="col-rap">${rapText}</td>
                     `;
+                    
+                    savedResults.push({
+                        num: numStr, usn: usn, pw: pw, is_error: false,
+                        country: data.country, created: data.created, avatar: data.avatar,
+                        korblox: data.korblox, korles: data.korles, malivinus: data.malivinus, 
+                        crown_8bit: data.crown_8bit, rap: data.rap
+                    });
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
@@ -490,6 +507,7 @@ async function processQueue() {
                         <td class="col-pw">${pw}</td>
                         <td colspan="4" class="txt-error">Koneksi terputus.</td>
                     `;
+                    savedResults.push({num: numStr, usn: usn, pw: pw, is_error: true, error_msg: "Koneksi terputus"});
                 }
             }
         }
@@ -503,6 +521,100 @@ async function processQueue() {
     } else if (!isProcessing) {
         updateButtons();
     }
+}
+
+// FITUR SIMPAN & PINDAH HALAMAN
+function saveAndRedirect() {
+    if (savedResults.length === 0) {
+        showModal("Kosong", "Belum ada data yang selesai diproses untuk disimpan.");
+        return;
+    }
+    
+    // Ambil data lama (jika ada), lalu gabungkan dengan data baru
+    let existing = localStorage.getItem('robloxFilterHistory');
+    let historyArr = existing ? JSON.parse(existing) : [];
+    
+    // Gabungkan (bisa disesuaikan mau replace atau push)
+    // Di sini kita replace aja biar ga terlalu banyak
+    localStorage.setItem('robloxFilterHistory', JSON.stringify(savedResults));
+    
+    showModal("Berhasil", "Riwayat berhasil disimpan di halaman khusus!");
+    
+    // Bersihkan halaman utama
+    document.getElementById('tableBody').innerHTML = '';
+    document.getElementById('data').value = '';
+    savedResults = [];
+}
+
+// FITUR BUKA/TUTUP HALAMAN RIWAYAT
+function toggleHistoryPage() {
+    const mainPage = document.getElementById('mainPage');
+    const historyPage = document.getElementById('historyPage');
+    
+    if (historyPage.style.display === 'none') {
+        // Buka Halaman Riwayat
+        mainPage.style.display = 'none';
+        historyPage.style.display = 'block';
+        renderHistoryTable();
+    } else {
+        // Kembali ke Halaman Utama
+        historyPage.style.display = 'none';
+        mainPage.style.display = 'block';
+    }
+}
+
+function renderHistoryTable() {
+    let stored = localStorage.getItem('robloxFilterHistory');
+    let dataArray = stored ? JSON.parse(stored) : [];
+    const tableBody = document.getElementById('historyTableBody');
+    tableBody.innerHTML = ''; 
+
+    if(dataArray.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada riwayat tersimpan.</td></tr>`;
+        return;
+    }
+
+    dataArray.forEach(item => {
+        let tr = document.createElement('tr');
+        
+        if (item.is_error) {
+            tr.innerHTML = `
+                <td class="col-num">${item.num}</td>
+                <td class="col-avatar"><div style="display:flex; justify-content:center; align-items:center; width:28px; height:28px; background:#0b1120; border-radius:50%; color:var(--danger); font-size:10px; margin:auto;">X</div></td>
+                <td class="col-usn" style="color:var(--danger)">${item.usn}</td>
+                <td class="col-pw">${item.pw}</td>
+                <td colspan="4" class="txt-error">${item.error_msg}</td>
+            `;
+        } else {
+            let imgTag = item.avatar ? `<img src="${item.avatar}">` : `-`;
+            
+            let statusKorblox = item.korblox ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
+            let statusKorles = item.korles ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
+            let statusMali = item.malivinus ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
+            let status8bit = item.crown_8bit ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
+            
+            let statusHtml = `
+                <span class="status-line"><span class="status-label">Korblox:</span> ${statusKorblox}</span>
+                <span class="status-line"><span class="status-label">Korles:</span> ${statusKorles}</span>
+                <span class="status-line"><span class="status-label">Malivinus:</span> ${statusMali}</span>
+                <span class="status-line"><span class="status-label">8bit crown:</span> ${status8bit}</span>
+            `;
+
+            let rapText = item.rap > 0 ? `<span class="txt-rap">${item.rap.toLocaleString()}</span>` : `<span class="txt-no" style="font-size:10px;">Priv</span>`;
+
+            tr.innerHTML = `
+                <td class="col-num">${item.num}</td>
+                <td class="col-avatar">${imgTag}</td>
+                <td class="col-usn">${item.usn}</td>
+                <td class="col-pw">${item.pw}</td>
+                <td class="col-ip">${item.country}<span class="date-mobile">${item.created}</span></td>
+                <td class="col-date">${item.created}</td>
+                <td class="col-status">${statusHtml}</td>
+                <td class="col-rap">${rapText}</td>
+            `;
+        }
+        tableBody.appendChild(tr);
+    });
 }
 </script>
 </body>
@@ -544,15 +656,11 @@ def filter_account():
         'Accept': 'application/json'
     })
     
-    # --- DETEKSI IP (Pakai ipwho.is) ---
     country_name = "Unknown"
     if ip_addr:
         try:
             ip_addr = ip_addr.strip().rstrip('.')
-            
-            # ipwho.is mendukung IPv4 dan IPv6
             ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
-            
             if ip_req.status_code == 200:
                 req_json = ip_req.json()
                 if req_json.get('success'):
@@ -561,7 +669,6 @@ def filter_account():
                     country_name = "Not Found"
             else:
                 country_name = "API Error"
-                
         except Exception:
             country_name = "IP Error"
     
@@ -619,18 +726,15 @@ def filter_account():
         
         time.sleep(0.1)
         
-        # --- BAGIAN RAP ROLIMONS DENGAN LIBRARY ---
         rap_val = 0
         ltd_val = 0
         try:
             player_info = rolimons.player.get_player_info(user_id)
-            
             if player_info and 'rap' in player_info:
                 rap_val = player_info['rap']
                 ltd_val = player_info.get('num_limiteds', 0)
         except Exception as e:
             print(f"Log Error RAP: {e}") 
-        # -------------------------------------------------------------------
                 
         return jsonify({
             'status': 'Found',
