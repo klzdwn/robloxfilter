@@ -300,12 +300,13 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
-// --- FIX LOGIKA STOP ---
+// --- LOGIKA STOP DIPERBAIKI ---
 function stopFilter() {
-    if (currentAbortController) currentAbortController.abort();
+    if (currentAbortController) {
+        currentAbortController.abort();
+        currentAbortController = null; // Bersihkan AbortController
+    }
     
-    // Hentikan proses, tapi JANGAN reset currentIndex.
-    // Biarkan currentIndex tetap di posisi terakhir agar bisa dilanjutkan.
     isProcessing = false; 
     isPaused = false;
     isStopped = true; 
@@ -315,7 +316,7 @@ function stopFilter() {
 
 // --- FITUR LANJUTKAN ---
 function resumeFilter() {
-    if (isProcessing) return; // Abaikan jika sedang proses
+    if (isProcessing) return; 
     
     if (currentIndex >= currentLines.length) {
         showModal("Selesai", "Semua data sudah diproses.");
@@ -325,8 +326,8 @@ function resumeFilter() {
     isStopped = false;
     isPaused = false;
     isProcessing = true;
+    currentAbortController = null; // Pastikan bersih sebelum lanjut
     
-    // Lanjutkan proses dari currentIndex yang tersimpan
     processQueue();
 }
 
@@ -345,7 +346,6 @@ function updateButtons() {
         btnFilter.innerText = "Mulai Filter";
         btnStop.disabled = true;
         
-        // Tombol Lanjutkan hanya menyala jika proses di-Stop dan sisa data masih ada
         if (isStopped && currentIndex < currentLines.length) {
             btnResume.disabled = false;
         } else {
@@ -364,10 +364,11 @@ function startFilter() {
     }
     
     document.getElementById('tableBody').innerHTML = '';
-    currentIndex = 0; // Reset ke awal
+    currentIndex = 0; 
     isStopped = false;
     isPaused = false;
     isProcessing = true;
+    currentAbortController = null; // PENTING: Reset agar tombol Stop berfungsi lagi
     
     updateButtons();
     processQueue();
@@ -377,9 +378,9 @@ async function processQueue() {
     const tableBody = document.getElementById('tableBody');
 
     for (let i = currentIndex; i < currentLines.length; i++) {
-        currentIndex = i; // Simpan posisi index saat ini
+        currentIndex = i; 
 
-        if (!isProcessing) break; // Berhenti jika di-Stop
+        if (!isProcessing) break; 
 
         while (isPaused && isProcessing) {
             await new Promise(resolve => setTimeout(resolve, 500)); 
@@ -398,6 +399,7 @@ async function processQueue() {
             let isEmail = usn.includes('@'); 
 
             let tr = document.createElement('tr');
+            tr.id = `row-${i}`; 
             tr.innerHTML = `
                 <td class="col-num">${numStr}</td>
                 <td class="col-avatar">⏳</td>
@@ -408,6 +410,7 @@ async function processQueue() {
             tableBody.appendChild(tr);
 
             try {
+                // Buat controller BARU untuk setiap request
                 currentAbortController = new AbortController();
                 const signal = currentAbortController.signal;
 
@@ -459,12 +462,7 @@ async function processQueue() {
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    // Tampilkan dibatalkan, lalu keluar dari loop.
-                    // currentIndex saat ini sudah menunjuk ke baris yang dibatalkan ini.
-                    tr.innerHTML = `
-                        <td class="col-num">${numStr}</td>
-                        <td colspan="7" style="color:var(--warning); text-align:center;">Dibatalkan.</td>
-                    `;
+                    tr.remove(); 
                     break; 
                 } else {
                     tr.innerHTML = `
@@ -476,18 +474,16 @@ async function processQueue() {
                     `;
                 }
             }
-            currentAbortController = null;
+            // JANGAN set null di sini, biarkan sampai loop selesai atau di-stop
         }
     }
     
-    // Setelah loop selesai, periksa apakah sudah mentok di akhir
     if (isProcessing && currentIndex >= currentLines.length - 1) {
         isProcessing = false;
         isStopped = false;
-        currentIndex = currentLines.length; // Pastikan mentok
+        currentIndex = currentLines.length; 
         updateButtons();
     } else if (!isProcessing) {
-        // Jika berhenti karena di-Stop
         updateButtons();
     }
 }
