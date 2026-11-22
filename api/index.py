@@ -102,8 +102,8 @@ HTML_PAGE = """
     button:hover:not(:disabled), .btn-upload:hover { background-color: var(--primary-hover); }
     button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
     
-    .btn-danger { background-color: var(--danger); }
-    .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
+    .btn-warning { background-color: var(--warning); color: #000; }
+    .btn-warning:hover:not(:disabled) { background-color: #d97706; }
     
     .btn-success { background-color: var(--success); }
     .btn-success:hover:not(:disabled) { background-color: #059669; }
@@ -149,6 +149,13 @@ HTML_PAGE = """
         font-weight: 600;
         font-size: 10px;
         text-transform: uppercase;
+        white-space: nowrap; /* Mencegah teks turun ke bawah */
+    }
+
+    /* Khusus Header Negara digeser ke kanan dan dijaga 1 baris */
+    th.col-ip { 
+        text-align: center; 
+        padding-left: 15px; 
     }
 
     tr:hover { background-color: rgba(255, 255, 255, 0.02); }
@@ -158,7 +165,7 @@ HTML_PAGE = """
     .col-avatar img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; }
     .col-usn { font-weight: 600; color: #fff; word-break: break-all; max-width: 80px;}
     .col-pw { color: var(--text-muted); word-break: break-all; max-width: 70px;}
-    .col-ip { color: var(--warning); max-width: 60px; word-break: break-word;}
+    .col-ip { color: var(--warning); max-width: 60px; word-break: break-word; text-align: center;}
     
     .col-status { min-width: 100px; line-height: 1.3;}
     .status-line { display: block; white-space: nowrap; font-size: 10px;}
@@ -224,7 +231,8 @@ HTML_PAGE = """
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
             
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
-            <button id="stopBtn" class="btn-danger" onclick="stopFilter()" disabled>Stop</button>
+            <!-- TOMBOL STOP DIGANTI JADI JEDA -->
+            <button id="pauseBtn" class="btn-warning" onclick="pauseFilter()" disabled>Jeda</button>
             <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
         </div>
 
@@ -264,18 +272,22 @@ HTML_PAGE = """
 
 <script>
 let isProcessing = false;
-let isPaused = false; 
+let isPaused = false; // Status untuk fitur jeda (baik manual maupun pindah tab)
 let isStopped = false; 
 let currentAbortController = null;
 
 let currentLines = [];
 let currentIndex = 0;
 
+// Deteksi jika user pindah tab (Jeda Otomatis)
 document.addEventListener("visibilitychange", function() {
     if (document.hidden) { 
         isPaused = true; 
     } else { 
-        isPaused = false; 
+        // Saat balik ke tab, JANGAN langsung resume jika user menekan Jeda manual
+        if (!isStopped) {
+            isPaused = false; 
+        }
     }
 });
 
@@ -300,53 +312,52 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
-// --- LOGIKA STOP DIPERBAIKI ---
-function stopFilter() {
-    if (currentAbortController) {
-        currentAbortController.abort();
-        currentAbortController = null; // Bersihkan AbortController
-    }
-    
-    isProcessing = false; 
-    isPaused = false;
-    isStopped = true; 
-    
+// --- LOGIKA JEDA (Menggantikan Stop) ---
+function pauseFilter() {
+    isPaused = true; // Hanya membekukan loop
+    isStopped = true; // Tandai bahwa ini dijeda manual
     updateButtons();
 }
 
 // --- FITUR LANJUTKAN ---
 function resumeFilter() {
-    if (isProcessing) return; 
-    
-    if (currentIndex >= currentLines.length) {
-        showModal("Selesai", "Semua data sudah diproses.");
-        return;
+    if (isProcessing && isPaused) {
+        // Jika sedang proses tapi dijeda, lepas jedanya
+        isPaused = false;
+        isStopped = false;
+        updateButtons();
+    } else if (!isProcessing && currentIndex < currentLines.length) {
+        // Jika proses sudah benar-benar berhenti di tengah jalan, mulai ulang loop dari index terakhir
+        isStopped = false;
+        isPaused = false;
+        isProcessing = true;
+        updateButtons();
+        processQueue();
     }
-
-    isStopped = false;
-    isPaused = false;
-    isProcessing = true;
-    currentAbortController = null; // Pastikan bersih sebelum lanjut
-    
-    processQueue();
 }
 
 function updateButtons() {
     const btnFilter = document.getElementById('filterBtn');
-    const btnStop = document.getElementById('stopBtn');
+    const btnPause = document.getElementById('pauseBtn');
     const btnResume = document.getElementById('resumeBtn');
     
     if (isProcessing) {
         btnFilter.disabled = true;
         btnFilter.innerText = "Proses...";
-        btnStop.disabled = false;
-        btnResume.disabled = true;
+        btnPause.disabled = isPaused; // Matikan tombol jeda jika sudah dijeda
+        
+        if (isPaused) {
+            btnResume.disabled = false; // Nyalakan tombol lanjutkan jika sedang dijeda
+        } else {
+            btnResume.disabled = true;
+        }
     } else {
         btnFilter.disabled = false;
         btnFilter.innerText = "Mulai Filter";
-        btnStop.disabled = true;
+        btnPause.disabled = true;
         
-        if (isStopped && currentIndex < currentLines.length) {
+        // Nyalakan tombol lanjutkan jika proses terhenti di tengah jalan
+        if (currentIndex < currentLines.length) {
             btnResume.disabled = false;
         } else {
             btnResume.disabled = true;
@@ -368,7 +379,7 @@ function startFilter() {
     isStopped = false;
     isPaused = false;
     isProcessing = true;
-    currentAbortController = null; // PENTING: Reset agar tombol Stop berfungsi lagi
+    currentAbortController = null;
     
     updateButtons();
     processQueue();
@@ -382,6 +393,8 @@ async function processQueue() {
 
         if (!isProcessing) break; 
 
+        // --- FITUR JEDA ---
+        // Loop ini akan berhenti (nge-diam) selama isPaused = true
         while (isPaused && isProcessing) {
             await new Promise(resolve => setTimeout(resolve, 500)); 
         }
@@ -410,7 +423,6 @@ async function processQueue() {
             tableBody.appendChild(tr);
 
             try {
-                // Buat controller BARU untuk setiap request
                 currentAbortController = new AbortController();
                 const signal = currentAbortController.signal;
 
@@ -474,10 +486,10 @@ async function processQueue() {
                     `;
                 }
             }
-            // JANGAN set null di sini, biarkan sampai loop selesai atau di-stop
         }
     }
     
+    // Cek status jika loop selesai secara natural
     if (isProcessing && currentIndex >= currentLines.length - 1) {
         isProcessing = false;
         isStopped = false;
