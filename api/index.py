@@ -149,10 +149,9 @@ HTML_PAGE = """
         font-weight: 600;
         font-size: 10px;
         text-transform: uppercase;
-        white-space: nowrap; /* Mencegah teks turun ke bawah */
+        white-space: nowrap; 
     }
 
-    /* Khusus Header Negara digeser ke kanan dan dijaga 1 baris */
     th.col-ip { 
         text-align: center; 
         padding-left: 15px; 
@@ -184,12 +183,24 @@ HTML_PAGE = """
         font-size: 10px;
     }
 
+    /* CSS UNTUK TANGGAL DI HP */
+    .date-mobile { 
+        display: block; 
+        font-size: 9px; 
+        color: var(--text-muted); 
+        margin-top: 3px; 
+        font-weight: 400;
+        white-space: nowrap;
+    }
+
     .col-date { display: none; }
     @media (min-width: 600px) {
         .col-date { display: table-cell; color: var(--text-muted); }
         th, td { padding: 10px 8px; font-size: 12px; }
         .col-usn { max-width: none; }
         .col-pw { max-width: none; }
+        .col-ip { text-align: left; width: auto;}
+        .date-mobile { display: none; } /* Sembunyikan di PC karena sudah ada kolom sendiri */
     }
 
     .modal-overlay {
@@ -231,7 +242,6 @@ HTML_PAGE = """
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
             
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
-            <!-- TOMBOL STOP DIGANTI JADI JEDA -->
             <button id="pauseBtn" class="btn-warning" onclick="pauseFilter()" disabled>Jeda</button>
             <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
         </div>
@@ -272,19 +282,17 @@ HTML_PAGE = """
 
 <script>
 let isProcessing = false;
-let isPaused = false; // Status untuk fitur jeda (baik manual maupun pindah tab)
+let isPaused = false; 
 let isStopped = false; 
 let currentAbortController = null;
 
 let currentLines = [];
 let currentIndex = 0;
 
-// Deteksi jika user pindah tab (Jeda Otomatis)
 document.addEventListener("visibilitychange", function() {
     if (document.hidden) { 
         isPaused = true; 
     } else { 
-        // Saat balik ke tab, JANGAN langsung resume jika user menekan Jeda manual
         if (!isStopped) {
             isPaused = false; 
         }
@@ -312,22 +320,18 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
-// --- LOGIKA JEDA (Menggantikan Stop) ---
 function pauseFilter() {
-    isPaused = true; // Hanya membekukan loop
-    isStopped = true; // Tandai bahwa ini dijeda manual
+    isPaused = true; 
+    isStopped = true; 
     updateButtons();
 }
 
-// --- FITUR LANJUTKAN ---
 function resumeFilter() {
     if (isProcessing && isPaused) {
-        // Jika sedang proses tapi dijeda, lepas jedanya
         isPaused = false;
         isStopped = false;
         updateButtons();
     } else if (!isProcessing && currentIndex < currentLines.length) {
-        // Jika proses sudah benar-benar berhenti di tengah jalan, mulai ulang loop dari index terakhir
         isStopped = false;
         isPaused = false;
         isProcessing = true;
@@ -344,10 +348,10 @@ function updateButtons() {
     if (isProcessing) {
         btnFilter.disabled = true;
         btnFilter.innerText = "Proses...";
-        btnPause.disabled = isPaused; // Matikan tombol jeda jika sudah dijeda
+        btnPause.disabled = isPaused; 
         
         if (isPaused) {
-            btnResume.disabled = false; // Nyalakan tombol lanjutkan jika sedang dijeda
+            btnResume.disabled = false; 
         } else {
             btnResume.disabled = true;
         }
@@ -356,7 +360,6 @@ function updateButtons() {
         btnFilter.innerText = "Mulai Filter";
         btnPause.disabled = true;
         
-        // Nyalakan tombol lanjutkan jika proses terhenti di tengah jalan
         if (currentIndex < currentLines.length) {
             btnResume.disabled = false;
         } else {
@@ -393,8 +396,6 @@ async function processQueue() {
 
         if (!isProcessing) break; 
 
-        // --- FITUR JEDA ---
-        // Loop ini akan berhenti (nge-diam) selama isPaused = true
         while (isPaused && isProcessing) {
             await new Promise(resolve => setTimeout(resolve, 500)); 
         }
@@ -466,7 +467,10 @@ async function processQueue() {
                         <td class="col-avatar">${imgTag}</td>
                         <td class="col-usn">${usn}</td>
                         <td class="col-pw">${pw}</td>
-                        <td class="col-ip">${data.country}</td>
+                        <td class="col-ip">
+                            ${data.country}
+                            <span class="date-mobile">${data.created}</span>
+                        </td>
                         <td class="col-date">${data.created}</td>
                         <td class="col-status">${statusHtml}</td>
                         <td class="col-rap">${rapText}</td>
@@ -489,7 +493,6 @@ async function processQueue() {
         }
     }
     
-    // Cek status jika loop selesai secara natural
     if (isProcessing && currentIndex >= currentLines.length - 1) {
         isProcessing = false;
         isStopped = false;
