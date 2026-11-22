@@ -149,13 +149,7 @@ HTML_PAGE = """
         font-weight: 600;
         font-size: 10px;
         text-transform: uppercase;
-        white-space: nowrap; /* Mencegah teks turun ke bawah */
-    }
-
-    /* Khusus Header Negara digeser ke kanan dan dijaga 1 baris */
-    th.col-ip { 
-        text-align: center; 
-        padding-left: 15px; 
+        white-space: nowrap; 
     }
 
     tr:hover { background-color: rgba(255, 255, 255, 0.02); }
@@ -165,7 +159,16 @@ HTML_PAGE = """
     .col-avatar img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; }
     .col-usn { font-weight: 600; color: #fff; word-break: break-all; max-width: 80px;}
     .col-pw { color: var(--text-muted); word-break: break-all; max-width: 70px;}
-    .col-ip { color: var(--warning); max-width: 60px; word-break: break-word; text-align: center;}
+    
+    /* Kolom IP/Negara dibuat agar teks tanggal turun ke bawahnya */
+    .col-ip { color: var(--warning); width: 70px; text-align: center;}
+    .date-sub { 
+        display: block; 
+        font-size: 9px; 
+        color: var(--text-muted); 
+        margin-top: 3px; 
+        font-weight: 400;
+    }
     
     .col-status { min-width: 100px; line-height: 1.3;}
     .status-line { display: block; white-space: nowrap; font-size: 10px;}
@@ -184,12 +187,15 @@ HTML_PAGE = """
         font-size: 10px;
     }
 
+    /* Sembunyikan header Created di HP karena tanggal sudah pindah ke bawah Negara */
     .col-date { display: none; }
     @media (min-width: 600px) {
         .col-date { display: table-cell; color: var(--text-muted); }
         th, td { padding: 10px 8px; font-size: 12px; }
         .col-usn { max-width: none; }
         .col-pw { max-width: none; }
+        .col-ip { text-align: left; width: auto;}
+        .date-sub { display: none; } /* Di PC, tanggal kembali ke kolom sendiri */
     }
 
     .modal-overlay {
@@ -231,7 +237,6 @@ HTML_PAGE = """
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
             
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
-            <!-- TOMBOL STOP DIGANTI JADI JEDA -->
             <button id="pauseBtn" class="btn-warning" onclick="pauseFilter()" disabled>Jeda</button>
             <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
         </div>
@@ -272,19 +277,17 @@ HTML_PAGE = """
 
 <script>
 let isProcessing = false;
-let isPaused = false; // Status untuk fitur jeda (baik manual maupun pindah tab)
+let isPaused = false; 
 let isStopped = false; 
 let currentAbortController = null;
 
 let currentLines = [];
 let currentIndex = 0;
 
-// Deteksi jika user pindah tab (Jeda Otomatis)
 document.addEventListener("visibilitychange", function() {
     if (document.hidden) { 
         isPaused = true; 
     } else { 
-        // Saat balik ke tab, JANGAN langsung resume jika user menekan Jeda manual
         if (!isStopped) {
             isPaused = false; 
         }
@@ -312,22 +315,18 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
-// --- LOGIKA JEDA (Menggantikan Stop) ---
 function pauseFilter() {
-    isPaused = true; // Hanya membekukan loop
-    isStopped = true; // Tandai bahwa ini dijeda manual
+    isPaused = true; 
+    isStopped = true; 
     updateButtons();
 }
 
-// --- FITUR LANJUTKAN ---
 function resumeFilter() {
     if (isProcessing && isPaused) {
-        // Jika sedang proses tapi dijeda, lepas jedanya
         isPaused = false;
         isStopped = false;
         updateButtons();
     } else if (!isProcessing && currentIndex < currentLines.length) {
-        // Jika proses sudah benar-benar berhenti di tengah jalan, mulai ulang loop dari index terakhir
         isStopped = false;
         isPaused = false;
         isProcessing = true;
@@ -344,10 +343,10 @@ function updateButtons() {
     if (isProcessing) {
         btnFilter.disabled = true;
         btnFilter.innerText = "Proses...";
-        btnPause.disabled = isPaused; // Matikan tombol jeda jika sudah dijeda
+        btnPause.disabled = isPaused; 
         
         if (isPaused) {
-            btnResume.disabled = false; // Nyalakan tombol lanjutkan jika sedang dijeda
+            btnResume.disabled = false; 
         } else {
             btnResume.disabled = true;
         }
@@ -356,7 +355,6 @@ function updateButtons() {
         btnFilter.innerText = "Mulai Filter";
         btnPause.disabled = true;
         
-        // Nyalakan tombol lanjutkan jika proses terhenti di tengah jalan
         if (currentIndex < currentLines.length) {
             btnResume.disabled = false;
         } else {
@@ -393,8 +391,6 @@ async function processQueue() {
 
         if (!isProcessing) break; 
 
-        // --- FITUR JEDA ---
-        // Loop ini akan berhenti (nge-diam) selama isPaused = true
         while (isPaused && isProcessing) {
             await new Promise(resolve => setTimeout(resolve, 500)); 
         }
@@ -461,12 +457,16 @@ async function processQueue() {
 
                     let rapText = data.rap > 0 ? `<span class="txt-rap">${data.rap.toLocaleString()}</span>` : `<span class="txt-no" style="font-size:10px;">Priv</span>`;
 
+                    // TANGGAL DIMASUKKAN KE DALAM SPAN DI BAWAH NEGARA
                     tr.innerHTML = `
                         <td class="col-num">${numStr}</td>
                         <td class="col-avatar">${imgTag}</td>
                         <td class="col-usn">${usn}</td>
                         <td class="col-pw">${pw}</td>
-                        <td class="col-ip">${data.country}</td>
+                        <td class="col-ip">
+                            ${data.country}
+                            <span class="date-sub">${data.created}</span>
+                        </td>
                         <td class="col-date">${data.created}</td>
                         <td class="col-status">${statusHtml}</td>
                         <td class="col-rap">${rapText}</td>
@@ -489,7 +489,6 @@ async function processQueue() {
         }
     }
     
-    // Cek status jika loop selesai secara natural
     if (isProcessing && currentIndex >= currentLines.length - 1) {
         isProcessing = false;
         isStopped = false;
@@ -502,134 +501,3 @@ async function processQueue() {
 </script>
 </body>
 </html>
-"""
-
-# --- HEADLESS ---
-HEADLESS_IDS = [
-    15093053680, 131592085, 134082453, 134082473, 134082507, 
-    134082533, 134082557, 131929448, 11573370910, 23452365716, 
-    134082579, 134082613, 201
-]
-
-# --- KORBLOX ---
-KORBLOX_IDS = [139607718, 139607917, 2988500]
-
-# --- MALIVINUS ---
-MALIVINUS_IDS = [
-    2807147467, 2807142069, 2807144777, 
-    2807143328, 2807146071, 126200552021824
-]
-
-# --- 8-BIT ROYAL CROWN ---
-EIGHT_BIT_CROWN_IDS = [10159600649, 85696590060559]
-
-@app.route('/')
-def index():
-    return render_template_string(HTML_PAGE)
-
-@app.route('/filter', methods=['POST'])
-def filter_account():
-    data = request.json
-    usn = data.get('usn')
-    ip_addr = data.get('ip')
-    
-    session = requests.Session()
-    session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Accept': 'application/json'
-    })
-    
-    country_name = "Unknown"
-    if ip_addr:
-        try:
-            ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
-            if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
-                country_name = ip_req.json().get('country', 'Unknown')
-        except Exception:
-            country_name = "IP Error"
-    
-    try:
-        user_req = session.post('https://users.roblox.com/v1/usernames/users', json={
-            'usernames': [usn],
-            'excludeBannedUsers': False
-        })
-        
-        if user_req.status_code != 200 or not user_req.json().get('data'):
-            return jsonify({'status': 'Not Found', 'country': country_name})
-            
-        user_data = user_req.json()['data'][0]
-        user_id = user_data['id']
-        
-        time.sleep(0.1)
-        
-        info_req = session.get(f'https://users.roblox.com/v1/users/{user_id}')
-        created_date = "Unknown"
-        if info_req.status_code == 200:
-            created_raw = info_req.json().get('created', '')
-            if created_raw:
-                created_date = created_raw.split('T')[0]
-
-        time.sleep(0.1)
-        
-        avatar_req = session.get(f'https://avatar.roblox.com/v1/users/{user_id}/avatar')
-        
-        has_headless = False
-        has_korblox = False
-        has_malivinus = False
-        has_crown_8bit = False
-        
-        if avatar_req.status_code == 200:
-            assets = avatar_req.json().get('assets', [])
-            for asset in assets:
-                asset_id = asset.get('id')
-                if asset_id in HEADLESS_IDS:
-                    has_headless = True
-                if asset_id in KORBLOX_IDS:
-                    has_korblox = True
-                if asset_id in MALIVINUS_IDS:
-                    has_malivinus = True
-                if asset_id in EIGHT_BIT_CROWN_IDS: 
-                    has_crown_8bit = True
-                    
-        time.sleep(0.1)
-        
-        thumb_req = session.get(f'https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=150x150&format=Png&isCircular=true')
-        avatar_url = None
-        if thumb_req.status_code == 200:
-            thumb_data = thumb_req.json().get('data', [])
-            if thumb_data:
-                avatar_url = thumb_data[0].get('imageUrl')
-        
-        time.sleep(0.1)
-        
-        # --- BAGIAN RAP ROLIMONS DENGAN LIBRARY ---
-        rap_val = 0
-        ltd_val = 0
-        try:
-            player_info = rolimons.player.get_player_info(user_id)
-            
-            if player_info and 'rap' in player_info:
-                rap_val = player_info['rap']
-                ltd_val = player_info.get('num_limiteds', 0)
-        except Exception as e:
-            print(f"Log Error RAP: {e}") 
-        # -------------------------------------------------------------------
-                
-        return jsonify({
-            'status': 'Found',
-            'country': country_name,
-            'created': created_date,
-            'avatar': avatar_url,
-            'korblox': has_korblox,
-            'korles': has_korblox and has_headless,
-            'rap': rap_val,
-            'limiteds': ltd_val,
-            'malivinus': has_malivinus,
-            'crown_8bit': has_crown_8bit
-        })
-        
-    except Exception as e:
-        return jsonify({'status': 'Error', 'country': country_name})
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
