@@ -44,7 +44,7 @@ HTML_PAGE = """
 
     .container {
         width: 100%;
-        max-width: 900px;
+        max-width: 800px;
     }
 
     .header { margin-bottom: 20px; }
@@ -62,7 +62,7 @@ HTML_PAGE = """
 
     textarea { 
         width: 100%; 
-        height: 120px; 
+        height: 100px; 
         background-color: #0b1120; 
         color: #60a5fa; 
         border: 1px solid var(--border-color); 
@@ -76,31 +76,29 @@ HTML_PAGE = """
     }
     textarea:focus { outline: none; border-color: var(--primary); }
 
-    /* Tombol Group */
     .btn-group {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         margin-top: 5px;
     }
 
-    /* Base style untuk Button dan Label (Upload) */
     button, .btn-upload { 
         background-color: var(--primary); 
         color: white; 
         border: none; 
-        padding: 12px 20px; 
+        padding: 10px 15px; 
         cursor: pointer; 
         font-weight: 600; 
-        border-radius: 8px; 
+        border-radius: 6px; 
         font-family: 'Inter', sans-serif;
-        font-size: 14px;
+        font-size: 13px;
         transition: all 0.2s, transform 0.1s;
         flex: 1;
         text-align: center;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
         box-sizing: border-box;
     }
 
@@ -111,175 +109,133 @@ HTML_PAGE = """
     .btn-danger { background-color: var(--danger); }
     .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
 
-    /* Sembunyikan input file asli */
     input[type="file"] { display: none; }
 
-    /* --- LAYOUT LIST --- */
+    /* --- LAYOUT LIST SIMPEL --- */
     .results-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
     }
 
-    /* --- STYLING BARIS (ROW) --- */
     .result-row {
         background: var(--panel-bg);
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 10px 15px;
+        border-radius: 6px;
+        padding: 8px 12px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         transition: background 0.2s;
+        font-size: 12px;
     }
     .result-row:hover { background: #1e293b; border-color: #475569; }
 
-    /* Baris Atas */
+    /* Baris Atas: Teks Utama */
     .row-top {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        font-weight: 600;
+        gap: 6px;
         color: #fff;
-        border-bottom: 1px solid #334155;
-        padding-bottom: 8px;
     }
-    .row-top .separator { color: var(--text-muted); font-weight: 400; }
-    .row-top .label { color: var(--text-muted); font-weight: 500; }
     
-    /* Nomor Urut */
     .row-number {
         background: var(--primary);
         color: white;
-        width: 22px;
-        height: 22px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
-        margin-right: 5px;
+        margin-right: 4px;
     }
+
+    .main-text { font-weight: 600; }
+    .sub-text { color: var(--text-muted); font-weight: 400; }
+    .country-text { color: var(--warning); font-weight: 500; margin-left: auto; font-size: 11px; }
     
-    /* Baris Bawah */
+    /* Baris Bawah: Info & Badge */
     .row-bottom {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 10px;
+        padding-top: 6px;
+        border-top: 1px dashed #334155;
     }
 
     .row-avatar {
-        width: 36px;
-        height: 36px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
-        border: 2px solid var(--border-color);
+        border: 1px solid var(--border-color);
         object-fit: cover;
         background: #0b1120;
         flex-shrink: 0;
     }
 
-    .row-badges {
+    .row-info {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        align-items: center;
+        gap: 8px;
         flex: 1;
     }
 
-    /* --- BADGES (Stiker Status Kecil) --- */
-    .status-item {
-        font-size: 11px;
+    /* Badge Minimalis */
+    .badge {
+        font-size: 10px;
         font-weight: 600;
-        background: #0b1120;
-        padding: 3px 8px;
+        padding: 2px 6px;
         border-radius: 4px;
-        border: 1px solid var(--border-color);
-        white-space: nowrap;
+        border: 1px solid;
     }
-    .status-item span { color: var(--text-muted); font-weight: 400; margin-right: 3px;}
+    .badge-yes { color: var(--success); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
+    .badge-rap { color: var(--purple); border-color: rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.1); }
+    .badge-date { color: var(--text-muted); border-color: transparent; background: transparent; padding-left: 0; font-weight: 500;}
 
-    /* Warna Badge */
-    .badge-yes { color: var(--success); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); }
-    .badge-no { color: var(--danger); border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
-    .badge-rap { color: var(--purple); border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); }
-    
-    /* Loading & Error State */
-    .loading-box { text-align: center; padding: 15px; color: var(--warning); font-style: italic; font-size: 13px; }
-    .error-box { color: var(--danger); font-weight: bold; font-size: 13px; }
-
-    /* --- CUSTOM MODAL POP-UP --- */
-    .modal-overlay {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(4px);
+    /* Status Not Found */
+    .not-found-box {
         display: flex;
         align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-    .modal-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-    .modal-box {
-        background: var(--panel-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
-        padding: 24px;
-        max-width: 350px;
-        width: 90%;
-        text-align: center;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.2);
-        transform: translateY(20px);
-        transition: transform 0.3s ease;
-    }
-    .modal-overlay.active .modal-box {
-        transform: translateY(0);
-    }
-    .modal-icon {
-        font-size: 40px;
-        margin-bottom: 10px;
-    }
-    .modal-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #fff;
-        margin-bottom: 8px;
-    }
-    .modal-message {
-        font-size: 14px;
-        color: var(--text-muted);
-        margin-bottom: 20px;
-        line-height: 1.5;
-    }
-    .modal-btn {
-        background: var(--primary);
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 8px;
+        gap: 10px;
+        color: var(--danger);
         font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        width: 100%;
-        transition: background 0.2s;
-    }
-    .modal-btn:hover {
-        background: var(--primary-hover);
+        font-size: 12px;
     }
 
-    /* Responsif Mobile */
+    /* Custom Modal */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal-box {
+        background: var(--panel-bg); border: 1px solid var(--border-color);
+        border-radius: 12px; padding: 20px; max-width: 300px; width: 90%;
+        text-align: center; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        transform: translateY(20px); transition: transform 0.3s ease;
+    }
+    .modal-overlay.active .modal-box { transform: translateY(0); }
+    .modal-icon { font-size: 30px; margin-bottom: 10px; }
+    .modal-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .modal-message { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+    .modal-btn {
+        background: var(--primary); color: white; border: none;
+        padding: 8px 15px; border-radius: 6px; font-weight: 600;
+        font-size: 13px; cursor: pointer; width: 100%; transition: background 0.2s;
+    }
+    .modal-btn:hover { background: var(--primary-hover); }
+
     @media (max-width: 600px) {
-        .row-top { font-size: 12px; gap: 5px; }
-        .row-bottom { gap: 10px; }
-        .status-item { font-size: 10px; padding: 2px 6px; }
         .btn-group { flex-direction: column; }
+        .row-top { font-size: 11px; }
+        .country-text { margin-left: 0; width: 100%; display: block; margin-top: 2px; }
     }
 
 </style>
@@ -293,32 +249,25 @@ HTML_PAGE = """
     </div>
 
     <div class="input-group">
-        <!-- TEXTAREA TETAP ADA -->
         <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
         
         <div class="btn-group">
-            <!-- Label untuk upload file, udah dibenerin -->
-            <label for="fileInput" class="btn-upload">
-                📁 Upload .txt
-            </label>
+            <label for="fileInput" class="btn-upload">📁 Upload .txt</label>
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
-            
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
-            <button id="stopBtn" class="btn-danger" onclick="stopFilter()" disabled>Berhenti</button>
+            <button id="stopBtn" class="btn-danger" onclick="stopFilter()" disabled>Stop</button>
         </div>
     </div>
 
-    <!-- Container untuk List -->
     <div id="results" class="results-list"></div>
 </div>
 
-<!-- CUSTOM POP-UP MODAL -->
 <div class="modal-overlay" id="customModal">
     <div class="modal-box">
         <div class="modal-icon">⚠️</div>
         <div class="modal-title" id="modalTitle">Peringatan</div>
-        <div class="modal-message" id="modalMessage">Pesan peringatan di sini.</div>
-        <button class="modal-btn" onclick="closeModal()">Oke, Mengerti</button>
+        <div class="modal-message" id="modalMessage">Pesan peringatan.</div>
+        <button class="modal-btn" onclick="closeModal()">Oke</button>
     </div>
 </div>
 
@@ -326,40 +275,29 @@ HTML_PAGE = """
 let isProcessing = false;
 let currentAbortController = null;
 
-// Fungsi untuk memunculkan Custom Modal
 function showModal(title, message) {
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalMessage').innerText = message;
     document.getElementById('customModal').classList.add('active');
 }
 
-// Fungsi untuk menutup Custom Modal
 function closeModal() {
     document.getElementById('customModal').classList.remove('active');
 }
 
-// Fitur Upload File TXT
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = function(e) {
-        const content = e.target.result;
-        // Masukkan isi file ke textarea (menggantikan teks lama atau menambahkan)
-        document.getElementById('data').value = content;
+        document.getElementById('data').value = e.target.result;
     };
     reader.readAsText(file);
-    
-    // Reset input agar bisa upload file yang sama lagi jika diperlukan
     event.target.value = '';
 }
 
-// Fitur Stop Filter
 function stopFilter() {
-    if (currentAbortController) {
-        currentAbortController.abort(); // Batalkan request yang sedang berjalan
-    }
+    if (currentAbortController) currentAbortController.abort();
     isProcessing = false;
     updateButtons();
 }
@@ -370,7 +308,7 @@ function updateButtons() {
     
     if (isProcessing) {
         btnFilter.disabled = true;
-        btnFilter.innerText = "Memproses...";
+        btnFilter.innerText = "Proses...";
         btnStop.disabled = false;
     } else {
         btnFilter.disabled = false;
@@ -385,9 +323,8 @@ async function startFilter() {
     const lines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
     const resultsContainer = document.getElementById('results');
     
-    // Ganti alert bawaan dengan Custom Modal
     if(lines.length === 0) {
-        showModal("Data Kosong", "Masukkan data terlebih dahulu sebelum memulai filter!");
+        showModal("Data Kosong", "Masukkan data terlebih dahulu!");
         return;
     }
     
@@ -398,35 +335,29 @@ async function startFilter() {
     let counter = 1;
 
     for (let line of lines) {
-        if (!isProcessing) break; // Hentikan loop jika tombol stop ditekan
+        if (!isProcessing) break;
 
         let parts = line.split(':');
         if(parts.length >= 3) {
             let usn = parts[0].trim();
             let pw = parts[1].trim();
             let ip = parts[2].trim();
-            let numStr = counter.toString().padStart(2, '0'); // Format jadi 01, 02, dst
+            let numStr = counter.toString().padStart(2, '0');
             
-            // Buat Row Loading
+            // Loading Row
             let row = document.createElement('div');
             row.className = 'result-row';
             row.innerHTML = `
                 <div class="row-top">
                     <div class="row-number">${numStr}</div>
-                    <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
-                    <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
-                    <span class="label">IP:</span> <span>${ip}</span>
-                </div>
-                <div class="row-bottom">
-                    <div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">⏳</div>
-                    <div class="loading-box" style="padding:0; text-align:left;">Loading...</div>
+                    <span class="main-text">${usn} : ${pw}</span>
+                    <span class="sub-text">| Loading...</span>
                 </div>
             `;
             resultsContainer.appendChild(row);
             counter++;
 
             try {
-                // Siapkan AbortController untuk fitur berhenti
                 currentAbortController = new AbortController();
                 const signal = currentAbortController.signal;
 
@@ -434,7 +365,7 @@ async function startFilter() {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({usn: usn, ip: ip}),
-                    signal: signal // Tambahkan signal untuk abort
+                    signal: signal
                 });
                 
                 let data = await res.json();
@@ -443,70 +374,63 @@ async function startFilter() {
                     row.innerHTML = `
                         <div class="row-top">
                             <div class="row-number" style="background:var(--danger)">${numStr}</div>
-                            <span class="label" style="color:var(--danger)">USN:</span> <span>${usn}</span> <span class="separator">|</span>
-                            <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
-                            <span class="label">IP:</span> <span>${ip}</span> 
-                            <span style="color:var(--danger); font-size: 11px; margin-left:auto;">(Banned / Not Found)</span>
+                            <span class="main-text" style="color:var(--danger)">${usn} : ${pw}</span>
                         </div>
-                        <div class="row-bottom">
-                            <div class="row-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger);">X</div>
+                        <div class="row-bottom not-found-box">
+                            <div class="row-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:10px;">X</div>
+                            <span>Banned / Not Found</span>
                         </div>
                     `;
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}" class="row-avatar" loading="lazy">` : `<div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
                     
-                    // Format RAP
-                    let rapText = data.rap > 0 ? `${data.rap.toLocaleString()} RAP` : `Priv/None`;
-                    let rapClass = data.rap > 0 ? 'badge-rap' : 'badge-no';
+                    // LOGIKA SIMPEL: Hanya tampilkan badge jika "Yes"
+                    let badgesHtml = '';
+                    if (data.korblox) badgesHtml += `<span class="badge badge-yes">Korblox</span>`;
+                    if (data.korles) badgesHtml += `<span class="badge badge-yes">Korles</span>`;
+                    if (data.malivinus) badgesHtml += `<span class="badge badge-yes">Malivinus</span>`;
+                    if (data.crown_8bit) badgesHtml += `<span class="badge badge-yes">8Bit</span>`;
+                    if (data.rap > 0) badgesHtml += `<span class="badge badge-rap">${data.rap.toLocaleString()} RAP</span>`;
+                    
+                    // Jika tidak ada badge "Yes" sama sekali, beri teks biasa
+                    if (badgesHtml === '') {
+                        badgesHtml = `<span class="sub-text" style="font-size: 11px;">No Rare Items</span>`;
+                    }
 
                     row.innerHTML = `
-                        <!-- BARIS ATAS: NOMOR, USN, PW, IP, TANGGAL -->
                         <div class="row-top">
                             <div class="row-number">${numStr}</div>
-                            <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
-                            <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
-                            <span class="label">IP:</span> <span>${data.country}</span> <span class="separator">|</span>
-                            <span class="label">Created:</span> <span>${data.created}</span>
+                            <span class="main-text">${usn} : ${pw}</span> 
+                            <span class="country-text">📍 ${data.country}</span>
                         </div>
-
-                        <!-- BARIS BAWAH: AVATAR & BADGES -->
                         <div class="row-bottom">
                             ${imgTag}
-                            <div class="row-badges">
-                                <div class="status-item ${data.korblox ? 'badge-yes' : 'badge-no'}"><span>Korblox:</span> ${data.korblox ? 'Yes' : 'No'}</div>
-                                <div class="status-item ${data.korles ? 'badge-yes' : 'badge-no'}"><span>Korles:</span> ${data.korles ? 'Yes' : 'No'}</div>
-                                <div class="status-item ${data.malivinus ? 'badge-yes' : 'badge-no'}"><span>Malivinus:</span> ${data.malivinus ? 'Yes' : 'No'}</div>
-                                <div class="status-item ${data.crown_8bit ? 'badge-yes' : 'badge-no'}"><span>8Bit:</span> ${data.crown_8bit ? 'Yes' : 'No'}</div>
-                                <div class="status-item ${rapClass}"><span>RAP:</span> ${rapText}</div>
+                            <div class="row-info">
+                                <span class="badge badge-date">📅 ${data.created}</span>
+                                ${badgesHtml}
                             </div>
                         </div>
                     `;
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    // Jika dihentikan paksa oleh user
                     row.innerHTML = `
                         <div class="row-top">
                             <div class="row-number" style="background:var(--warning)">${numStr}</div>
-                            <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
-                            <span class="label" style="color:var(--warning)">Dibatalkan.</span>
+                            <span class="sub-text" style="color:var(--warning)">Dibatalkan.</span>
                         </div>
                     `;
-                    break; // Hentikan loop for
+                    break;
                 } else {
-                    // Error jaringan biasa
                     row.innerHTML = `
                         <div class="row-top">
                             <div class="row-number" style="background:var(--danger)">${numStr}</div>
-                            <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
-                            <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
-                            <span class="label">IP:</span> <span>${ip}</span>
+                            <span class="sub-text" style="color:var(--danger)">Error jaringan.</span>
                         </div>
-                        <div class="error-box">Kesalahan jaringan.</div>
                     `;
                 }
             }
-            currentAbortController = null; // Reset controller setelah selesai
+            currentAbortController = null;
         }
     }
     
