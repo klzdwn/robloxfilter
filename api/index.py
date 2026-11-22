@@ -34,7 +34,7 @@ HTML_PAGE = """
 <button onclick="startFilter()">Mulai Filter</button>
 <table id="resTable">
     <thead>
-        <tr><th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th><th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th></tr>
+        <tr><th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th><th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th><th>Malivinus</th></tr>
     </thead>
     <tbody id="tbody"></tbody>
 </table>
@@ -55,7 +55,7 @@ async function startFilter() {
             let ip = parts[2].trim();
             
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Proses...</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
+            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Proses...</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
             tbody.appendChild(tr);
 
             try {
@@ -68,19 +68,21 @@ async function startFilter() {
                 let data = await res.json();
                 
                 if (data.status === 'Not Found') {
-                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td class="bad">No</td><td class="bad">No</td><td>-</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td class="bad">No</td><td class="bad">No</td><td>-</td><td class="bad">No</td>`;
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}">` : 'N/A';
                     
                     let korbloxTag = data.korblox ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
                     let korlesTag = data.korles ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
                     
+                    let malivinusTag = data.malivinus ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
+
                     let rapText = data.rap > 0 ? `<span class="rap">${data.rap}</span> / ${data.limiteds}` : `<span class="warn">Priv/None</span>`;
 
-                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td><td>${malivinusTag}</td>`;
                 }
             } catch (e) {
-                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Error</td><td>-</td><td>N/A</td><td class="bad">Error</td><td class="bad">Error</td><td>-</td>`;
+                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Error</td><td>-</td><td>N/A</td><td class="bad">Error</td><td class="bad">Error</td><td>-</td><td class="bad">Error</td>`;
             }
             
             rowNum++;
@@ -92,8 +94,13 @@ async function startFilter() {
 </html>
 """
 
-HEADLESS_ID = 134330133
+# --- PERBAIKAN ID HEADLESS ---
+# Menggunakan list agar bisa mendeteksi versi klasik dan dinamis
+HEADLESS_IDS = [134082579, 15093053680] 
 KORBLOX_IDS = [139607718, 139607917, 2988500]
+
+# --- ID MALIVINUS ---
+MALIVINUS_ID = 334 
 
 @app.route('/')
 def index():
@@ -147,15 +154,19 @@ def filter_account():
         
         has_headless = False
         has_korblox = False
+        has_malivinus = False
         
         if avatar_req.status_code == 200:
             assets = avatar_req.json().get('assets', [])
             for asset in assets:
                 asset_id = asset.get('id')
-                if asset_id == HEADLESS_ID:
+                # Cek Headless (bisa salah satu dari list)
+                if asset_id in HEADLESS_IDS:
                     has_headless = True
                 if asset_id in KORBLOX_IDS:
                     has_korblox = True
+                if asset_id == MALIVINUS_ID:
+                    has_malivinus = True
                     
         time.sleep(0.2)
         
@@ -188,8 +199,12 @@ def filter_account():
             'korblox': has_korblox,
             'korles': has_korblox and has_headless,
             'rap': rap_val,
-            'limiteds': ltd_val
+            'limiteds': ltd_val,
+            'malivinus': has_malivinus
         })
         
     except Exception as e:
         return jsonify({'status': 'Error', 'country': country_name})
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
