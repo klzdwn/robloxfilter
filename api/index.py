@@ -11,43 +11,195 @@ HTML_PAGE = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>R0bl0x F1lt3r</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    body { background-color: #0d1117; color: #c9d1d9; font-family: monospace; padding: 10px; }
-    textarea { width: 100%; height: 120px; background-color: #161b22; color: #58a6ff; border: 1px solid #30363d; padding: 10px; box-sizing: border-box; font-family: monospace; }
-    button { background-color: #1f6feb; color: white; border: none; padding: 12px 20px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; border-radius: 4px; }
-    button:hover { background-color: #388bfd; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
-    th, td { border: 1px solid #30363d; padding: 6px; text-align: left; word-break: break-all; }
-    th { background-color: #161b22; }
-    .good { color: #3fb950; font-weight: bold; }
-    .bad { color: #f85149; font-weight: bold; }
-    .warn { color: #d29922; font-weight: bold; }
-    .rap { color: #a371f7; font-weight: bold; }
-    img { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #30363d; }
+    :root {
+        --bg-color: #0f172a;
+        --panel-bg: #1e293b;
+        --text-main: #e2e8f0;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --purple: #a855f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+        background-color: var(--bg-color); 
+        color: var(--text-main); 
+        font-family: 'Inter', sans-serif; 
+        padding: 20px 15px; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 1200px;
+    }
+
+    .header { margin-bottom: 20px; }
+    .header h2 { font-size: 22px; font-weight: 700; color: #fff; }
+    .header p { font-size: 13px; color: var(--text-muted); margin-top: 5px; }
+
+    .input-group {
+        background: var(--panel-bg);
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 20px;
+    }
+
+    textarea { 
+        width: 100%; 
+        height: 120px; 
+        background-color: #0b1120; 
+        color: #60a5fa; 
+        border: 1px solid var(--border-color); 
+        border-radius: 8px;
+        padding: 12px; 
+        font-family: 'Inter', monospace; 
+        font-size: 13px;
+        resize: vertical;
+        transition: border-color 0.2s;
+    }
+    textarea:focus { outline: none; border-color: var(--primary); }
+
+    button { 
+        background-color: var(--primary); 
+        color: white; 
+        border: none; 
+        padding: 12px 20px; 
+        cursor: pointer; 
+        font-weight: 600; 
+        margin-top: 12px; 
+        width: 100%; 
+        border-radius: 8px; 
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+    button:hover:not(:disabled) { background-color: var(--primary-hover); }
+    button:active:not(:disabled) { transform: scale(0.98); }
+    button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        background: var(--panel-bg);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Scrollbar kustom */
+    .table-wrapper::-webkit-scrollbar { height: 8px; }
+    .table-wrapper::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 4px; }
+    .table-wrapper::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    .table-wrapper::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-size: 13px; 
+        white-space: nowrap; /* Mencegah teks turun ke bawah */
+    }
+
+    th, td { 
+        padding: 12px 15px; 
+        text-align: left; 
+        border-bottom: 1px solid var(--border-color); 
+    }
+
+    th { 
+        background-color: #0b1120; 
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+
+    /* Styling untuk status Yes/No */
+    .badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+        text-align: center;
+        min-width: 45px;
+    }
+    .badge-yes { background-color: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-no { background-color: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-warn { background-color: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+    
+    .rap-text { color: var(--purple); font-weight: 600; }
+    
+    img { 
+        width: 38px; 
+        height: 38px; 
+        border-radius: 50%; 
+        border: 2px solid var(--border-color); 
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Animasi Loading */
+    .loading-text { color: var(--warning); font-style: italic; font-size: 12px; }
 </style>
 </head>
 <body>
-<h3>R0bl0x F1lt3r</h3>
-<p style="font-size: 11px; color: #8b949e;">Format: usn:pw:ip</p>
-<textarea id="data" placeholder="Karpuzunxx:878889999:38.114.120.212"></textarea>
-<br>
-<button onclick="startFilter()">Mulai Filter</button>
-<table id="resTable">
-    <thead>
-        <tr>
-            <th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th>
-            <th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th>
-            <th>Malivinus</th><th>8Bit Crown</th> <!-- KOLOM BARU -->
-        </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-</table>
+
+<div class="container">
+    <div class="header">
+        <h2>R0bl0x F1lt3r</h2>
+        <p>Format Input: <b>usn:pw:ip</b></p>
+    </div>
+
+    <div class="input-group">
+        <textarea id="data" placeholder="Karpuzunxx:878889999:38.114.120.212"></textarea>
+        <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="resTable">
+            <thead>
+                <tr>
+                    <th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th>
+                    <th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th>
+                    <th>Malivinus</th><th>8Bit Crown</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <!-- Data akan masuk ke sini -->
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <script>
 async function startFilter() {
+    const btn = document.getElementById('filterBtn');
     const lines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
     const tbody = document.getElementById('tbody');
+    
+    if(lines.length === 0) return alert("Masukkan data terlebih dahulu!");
+    
     tbody.innerHTML = '';
+    btn.disabled = true;
+    btn.innerText = "Memproses...";
 
     let rowNum = 1;
 
@@ -59,8 +211,8 @@ async function startFilter() {
             let ip = parts[2].trim();
             
             let tr = document.createElement('tr');
-            // Loading state: tambah 1 kolom '-'
-            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Proses...</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
+            // Render baris loading
+            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td colspan="8" class="loading-text">Mengecek data...</td>`;
             tbody.appendChild(tr);
 
             try {
@@ -73,26 +225,29 @@ async function startFilter() {
                 let data = await res.json();
                 
                 if (data.status === 'Not Found') {
-                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td class="bad">No</td><td class="bad">No</td><td>-</td><td class="bad">No</td><td class="bad">No</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td><span class="badge badge-no">No</span></td><td><span class="badge badge-no">No</span></td><td>-</td><td><span class="badge badge-no">No</span></td><td><span class="badge badge-no">No</span></td>`;
                 } else {
-                    let imgTag = data.avatar ? `<img src="${data.avatar}">` : 'N/A';
+                    let imgTag = data.avatar ? `<img src="${data.avatar}" loading="lazy">` : 'N/A';
                     
-                    let korbloxTag = data.korblox ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
-                    let korlesTag = data.korles ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
-                    let malivinusTag = data.malivinus ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
-                    let crownTag = data.crown_8bit ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`; // Tag Baru
+                    let korbloxTag = data.korblox ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
+                    let korlesTag = data.korles ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
+                    let malivinusTag = data.malivinus ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
+                    let crownTag = data.crown_8bit ? `<span class="badge badge-yes">Yes</span>` : `<span class="badge badge-no">No</span>`;
 
-                    let rapText = data.rap > 0 ? `<span class="rap">${data.rap}</span> / ${data.limiteds}` : `<span class="warn">Priv/None</span>`;
+                    let rapText = data.rap > 0 ? `<span class="rap-text">${data.rap.toLocaleString()}</span> / ${data.limiteds}` : `<span class="badge badge-warn">Priv/None</span>`;
 
-                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td><td>${malivinusTag}</td><td>${crownTag}</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td style="font-weight:600;">${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td><td>${malivinusTag}</td><td>${crownTag}</td>`;
                 }
             } catch (e) {
-                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Error</td><td>-</td><td>N/A</td><td class="bad">Error</td><td class="bad">Error</td><td>-</td><td class="bad">Error</td><td class="bad">Error</td>`;
+                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td colspan="8" style="color:var(--danger);">Terjadi kesalahan sistem.</td>`;
             }
             
             rowNum++;
         }
     }
+    
+    btn.disabled = false;
+    btn.innerText = "Mulai Filter";
 }
 </script>
 </body>
@@ -116,8 +271,6 @@ MALIVINUS_IDS = [
 ]
 
 # --- 8-BIT ROYAL CROWN ---
-# 10159600649 = Item resmi Roblox
-# 85696590060559 = UGC "8-Bit Royale Crown" (cadangan)
 EIGHT_BIT_CROWN_IDS = [10159600649, 85696590060559]
 
 @app.route('/')
@@ -173,7 +326,7 @@ def filter_account():
         has_headless = False
         has_korblox = False
         has_malivinus = False
-        has_crown_8bit = False # Inisialisasi
+        has_crown_8bit = False
         
         if avatar_req.status_code == 200:
             assets = avatar_req.json().get('assets', [])
@@ -185,7 +338,7 @@ def filter_account():
                     has_korblox = True
                 if asset_id in MALIVINUS_IDS:
                     has_malivinus = True
-                if asset_id in EIGHT_BIT_CROWN_IDS: # Logika Baru
+                if asset_id in EIGHT_BIT_CROWN_IDS: 
                     has_crown_8bit = True
                     
         time.sleep(0.2)
@@ -221,7 +374,7 @@ def filter_account():
             'rap': rap_val,
             'limiteds': ltd_val,
             'malivinus': has_malivinus,
-            'crown_8bit': has_crown_8bit # Kirim data ke Frontend
+            'crown_8bit': has_crown_8bit
         })
         
     except Exception as e:
