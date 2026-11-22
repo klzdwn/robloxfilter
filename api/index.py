@@ -94,13 +94,18 @@ async function startFilter() {
 </html>
 """
 
-# --- PERBAIKAN ID HEADLESS ---
-# Menggunakan list agar bisa mendeteksi versi klasik dan dinamis
 HEADLESS_IDS = [134082579, 15093053680] 
 KORBLOX_IDS = [139607718, 139607917, 2988500]
 
-# --- ID MALIVINUS ---
-MALIVINUS_ID = 334 
+# --- ID MALIVINUS (LENGKAP SATU BADAN) ---
+MALIVINUS_IDS = [
+    4682,               # Head
+    84563399526256,     # Torso
+    72144200325751,     # Right Arm
+    74873195978756,     # Left Arm (Recolorable)
+    130403685760932,    # Right Leg
+    140663034180170     # Left Leg
+]
 
 @app.route('/')
 def index():
@@ -160,12 +165,12 @@ def filter_account():
             assets = avatar_req.json().get('assets', [])
             for asset in assets:
                 asset_id = asset.get('id')
-                # Cek Headless (bisa salah satu dari list)
                 if asset_id in HEADLESS_IDS:
                     has_headless = True
                 if asset_id in KORBLOX_IDS:
                     has_korblox = True
-                if asset_id == MALIVINUS_ID:
+                # Cek apakah ID aset di avatar ada di dalam list MALIVINUS_IDS
+                if asset_id in MALIVINUS_IDS:
                     has_malivinus = True
                     
         time.sleep(0.2)
