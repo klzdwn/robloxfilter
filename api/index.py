@@ -34,7 +34,11 @@ HTML_PAGE = """
 <button onclick="startFilter()">Mulai Filter</button>
 <table id="resTable">
     <thead>
-        <tr><th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th><th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th><th>Malivinus</th></tr>
+        <tr>
+            <th>No</th><th>Usn</th><th>Pw</th><th>Negara</th><th>Created</th>
+            <th>Avatar</th><th>Korblox</th><th>Korles</th><th>RAP / Ltd</th>
+            <th>Malivinus</th><th>8Bit Crown</th> <!-- KOLOM BARU -->
+        </tr>
     </thead>
     <tbody id="tbody"></tbody>
 </table>
@@ -55,7 +59,8 @@ async function startFilter() {
             let ip = parts[2].trim();
             
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Proses...</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
+            // Loading state: tambah 1 kolom '-'
+            tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Proses...</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
             tbody.appendChild(tr);
 
             try {
@@ -68,21 +73,21 @@ async function startFilter() {
                 let data = await res.json();
                 
                 if (data.status === 'Not Found') {
-                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td class="bad">No</td><td class="bad">No</td><td>-</td><td class="bad">No</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>-</td><td>N/A</td><td class="bad">No</td><td class="bad">No</td><td>-</td><td class="bad">No</td><td class="bad">No</td>`;
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}">` : 'N/A';
                     
                     let korbloxTag = data.korblox ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
                     let korlesTag = data.korles ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
-                    
                     let malivinusTag = data.malivinus ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`;
+                    let crownTag = data.crown_8bit ? `<span class="good">Yes</span>` : `<span class="bad">No</span>`; // Tag Baru
 
                     let rapText = data.rap > 0 ? `<span class="rap">${data.rap}</span> / ${data.limiteds}` : `<span class="warn">Priv/None</span>`;
 
-                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td><td>${malivinusTag}</td>`;
+                    tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>${data.country}</td><td>${data.created}</td><td>${imgTag}</td><td>${korbloxTag}</td><td>${korlesTag}</td><td>${rapText}</td><td>${malivinusTag}</td><td>${crownTag}</td>`;
                 }
             } catch (e) {
-                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Error</td><td>-</td><td>N/A</td><td class="bad">Error</td><td class="bad">Error</td><td>-</td><td class="bad">Error</td>`;
+                tr.innerHTML = `<td>${rowNum}</td><td>${usn}</td><td>${pw}</td><td>Error</td><td>-</td><td>N/A</td><td class="bad">Error</td><td class="bad">Error</td><td>-</td><td class="bad">Error</td><td class="bad">Error</td>`;
             }
             
             rowNum++;
@@ -94,34 +99,26 @@ async function startFilter() {
 </html>
 """
 
-# --- FIX TOTAL ID HEADLESS HORSEMAN (LENGKAP) ---
+# --- HEADLESS ---
 HEADLESS_IDS = [
-    15093053680,    # Headless Head (Dynamic Head - versi baru)
-    131592085,      # Headless Horseman's New Head
-    134082453,      # Bagian dari bundle
-    134082473,      # Bagian dari bundle
-    134082507,      # Bagian dari bundle
-    134082533,      # Bagian dari bundle
-    134082557,      # Bagian dari bundle
-    131929448,      # Bagian dari bundle
-    11573370910,    # Bagian dari bundle
-    23452365716,    # Bagian dari bundle
-    134082579,      # Headless Head (Classic / Import ID)
-    134082613,      # AssetId lama
-    201             # Bundle ID Headless Horseman (sebagai cadangan)
+    15093053680, 131592085, 134082453, 134082473, 134082507, 
+    134082533, 134082557, 131929448, 11573370910, 23452365716, 
+    134082579, 134082613, 201
 ]
 
+# --- KORBLOX ---
 KORBLOX_IDS = [139607718, 139607917, 2988500]
 
-# --- ID RESMI BUNDLE MALIVINIUS (ID 334) ---
+# --- MALIVINUS ---
 MALIVINUS_IDS = [
-    2807147467,       # Torso
-    2807142069,       # Left Arm
-    2807144777,       # Right Arm
-    2807143328,       # Left Leg
-    2807146071,       # Right Leg
-    126200552021824   # Head
+    2807147467, 2807142069, 2807144777, 
+    2807143328, 2807146071, 126200552021824
 ]
+
+# --- 8-BIT ROYAL CROWN ---
+# 10159600649 = Item resmi Roblox
+# 85696590060559 = UGC "8-Bit Royale Crown" (cadangan)
+EIGHT_BIT_CROWN_IDS = [10159600649, 85696590060559]
 
 @app.route('/')
 def index():
@@ -176,19 +173,20 @@ def filter_account():
         has_headless = False
         has_korblox = False
         has_malivinus = False
+        has_crown_8bit = False # Inisialisasi
         
         if avatar_req.status_code == 200:
             assets = avatar_req.json().get('assets', [])
             for asset in assets:
                 asset_id = asset.get('id')
-                # Cek Headless (menggunakan list ID yang sudah lengkap)
                 if asset_id in HEADLESS_IDS:
                     has_headless = True
                 if asset_id in KORBLOX_IDS:
                     has_korblox = True
-                # Cek Malivinus
                 if asset_id in MALIVINUS_IDS:
                     has_malivinus = True
+                if asset_id in EIGHT_BIT_CROWN_IDS: # Logika Baru
+                    has_crown_8bit = True
                     
         time.sleep(0.2)
         
@@ -219,10 +217,11 @@ def filter_account():
             'created': created_date,
             'avatar': avatar_url,
             'korblox': has_korblox,
-            'korles': has_korblox and has_headless, # Korles = Korblox + Headless
+            'korles': has_korblox and has_headless,
             'rap': rap_val,
             'limiteds': ltd_val,
-            'malivinus': has_malivinus
+            'malivinus': has_malivinus,
+            'crown_8bit': has_crown_8bit # Kirim data ke Frontend
         })
         
     except Exception as e:
