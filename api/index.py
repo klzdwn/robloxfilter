@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template_string
 import requests
 import time
-import cloudscraper # --- TAMBAHAN BARU ---
+import rolimons  # --- TAMBAHAN BARU ---
 
 app = Flask(__name__)
 
@@ -416,22 +416,19 @@ def filter_account():
         
         time.sleep(0.2)
         
-        # --- BAGIAN RAP ROLIMONS YANG DIGANTI KE CLOUDSCRAPER ---
+        # --- BAGIAN RAP ROLIMONS DENGAN LIBRARY (Cuma ini yang diganti) ---
         rap_val = 0
         ltd_val = 0
         try:
-            # Inisialisasi cloudscraper (bypass Cloudflare)
-            scraper = cloudscraper.create_scraper()
-            roli_req = scraper.get(f'https://api.rolimons.com/players/v1/playerinfo/{user_id}', timeout=5)
+            # Nembak pakai library rolimons
+            player_info = rolimons.player.get_player_info(user_id)
             
-            if roli_req.status_code == 200:
-                roli_data = roli_req.json()
-                if roli_data.get('success'):
-                    rap_val = roli_data.get('rap', 0)
-                    ltd_val = roli_data.get('num_limiteds', 0)
+            if player_info and 'rap' in player_info:
+                rap_val = player_info['rap']
+                ltd_val = player_info.get('num_limiteds', 0)
         except Exception as e:
-            print(f"Log Error RAP: {e}") # Biar kelihatan di Vercel Logs kalau gagal
-        # --------------------------------------------------------
+            print(f"Log Error RAP: {e}") # Biar kelihatan di Vercel Logs
+        # -------------------------------------------------------------------
                 
         return jsonify({
             'status': 'Found',
