@@ -193,7 +193,7 @@ HTML_PAGE = """
     </div>
 
     <div class="input-group">
-        <textarea id="data" placeholder="Karpuzunxx:878889999:38.114.120.212"></textarea>
+        <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
         <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
     </div>
 
@@ -253,7 +253,7 @@ async function startFilter() {
                                 <div class="card-password">${pw}</div>
                             </div>
                         </div>
-                        <div class="error-box">Username tidak ditemukan / Banned.</div>
+                        <div class="error-box">Username tidak ditemukan karena pakai email</div>
                     `;
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}" class="card-avatar" loading="lazy">` : `<div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
