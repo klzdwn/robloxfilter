@@ -180,10 +180,9 @@ HTML_PAGE = """
         color: var(--danger); 
         font-style: italic; 
         font-weight: 500;
-        font-size: 10px; /* Dikecilkan dari sebelumnya */
+        font-size: 10px;
     }
 
-    /* Sembunyikan kolom Created di HP agar muat, tampilkan di PC */
     .col-date { display: none; }
     @media (min-width: 600px) {
         .col-date { display: table-cell; color: var(--text-muted); }
@@ -277,11 +276,10 @@ HTML_PAGE = """
 
 <script>
 let isProcessing = false;
-let isPaused = false; // Variabel untuk menandai apakah sedang dijeda karena pindah tab
-let isStopped = false; // Variabel untuk menandai apakah di-stop oleh user
+let isPaused = false; 
+let isStopped = false; 
 let currentAbortController = null;
 
-// Variabel untuk menyimpan posisi antrean saat ini
 let currentLines = [];
 let currentIndex = 0;
 
@@ -314,18 +312,16 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
-// --- FITUR STOP ---
 function stopFilter() {
     if (currentAbortController) currentAbortController.abort();
     isProcessing = false;
     isPaused = false;
-    isStopped = true; // Tandai bahwa ini berhenti di tengah jalan
+    isStopped = true;
     updateButtons();
 }
 
-// --- FITUR LANJUTKAN ---
 function resumeFilter() {
-    if (isProcessing) return; // Kalau sedang jalan, abaikan
+    if (isProcessing) return;
     
     if (currentIndex >= currentLines.length) {
         showModal("Selesai", "Semua data sudah diproses.");
@@ -336,7 +332,6 @@ function resumeFilter() {
     isPaused = false;
     isProcessing = true;
     
-    // Panggil proses filter dari index terakhir
     processQueue();
 }
 
@@ -355,7 +350,6 @@ function updateButtons() {
         btnFilter.innerText = "Mulai Filter";
         btnStop.disabled = true;
         
-        // Tombol Lanjutkan hanya aktif jika di-stop di tengah jalan dan belum habis datanya
         if (isStopped && currentIndex < currentLines.length) {
             btnResume.disabled = false;
         } else {
@@ -364,7 +358,6 @@ function updateButtons() {
     }
 }
 
-// Mulai dari awal
 function startFilter() {
     if (isProcessing) return;
     
@@ -375,7 +368,7 @@ function startFilter() {
     }
     
     document.getElementById('tableBody').innerHTML = '';
-    currentIndex = 0; // Reset index ke awal
+    currentIndex = 0;
     isStopped = false;
     isPaused = false;
     isProcessing = true;
@@ -384,17 +377,14 @@ function startFilter() {
     processQueue();
 }
 
-// Fungsi utama antrean (bisa dipanggil dari Mulai atau Lanjutkan)
 async function processQueue() {
     const tableBody = document.getElementById('tableBody');
 
-    // Looping dari currentIndex (jika baru mulai, dari 0. jika lanjut, dari index terakhir)
     for (let i = currentIndex; i < currentLines.length; i++) {
-        currentIndex = i; // Simpan posisi index saat ini
+        currentIndex = i;
 
-        if (!isProcessing) break; // Berhenti jika tombol Stop ditekan
+        if (!isProcessing) break;
 
-        // Fitur Jeda Otomatis jika pindah tab
         while (isPaused && isProcessing) {
             await new Promise(resolve => setTimeout(resolve, 500)); 
         }
@@ -407,11 +397,10 @@ async function processQueue() {
             let usn = parts[0].trim();
             let pw = parts[1].trim();
             let ip = parts[2].trim();
-            let numStr = (i + 1).toString(); // Nomor urut lanjut
+            let numStr = (i + 1).toString(); 
             
             let isEmail = usn.includes('@'); 
 
-            // Baris Loading
             let tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="col-num">${numStr}</td>
@@ -445,6 +434,7 @@ async function processQueue() {
                         <td colspan="4" class="txt-error">${errorMsg}</td>
                     `;
                 } else {
+                    // MENGHAPUS loading="lazy" agar gambar langsung dimuat
                     let imgTag = data.avatar ? `<img src="${data.avatar}">` : `-`;
                     
                     let statusKorblox = data.korblox ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
@@ -478,7 +468,7 @@ async function processQueue() {
                         <td class="col-num">${numStr}</td>
                         <td colspan="7" style="color:var(--warning); text-align:center;">Dibatalkan.</td>
                     `;
-                    break; // Keluar dari loop karena di stop
+                    break; 
                 } else {
                     tr.innerHTML = `
                         <td class="col-num">${numStr}</td>
@@ -493,14 +483,12 @@ async function processQueue() {
         }
     }
     
-    // Jika loop selesai secara natural (tidak di stop)
     if (isProcessing && currentIndex >= currentLines.length - 1) {
         isProcessing = false;
         isStopped = false;
-        currentIndex = currentLines.length; // Tandai sudah habis
+        currentIndex = currentLines.length; 
         updateButtons();
     } else if (!isProcessing) {
-        // Jika berhenti karena di stop
         updateButtons();
     }
 }
@@ -565,7 +553,8 @@ def filter_account():
         user_data = user_req.json()['data'][0]
         user_id = user_data['id']
         
-        time.sleep(0.2)
+        # Waktu jeda dipercepat sedikit dari 0.2 ke 0.1
+        time.sleep(0.1)
         
         info_req = session.get(f'https://users.roblox.com/v1/users/{user_id}')
         created_date = "Unknown"
@@ -574,7 +563,7 @@ def filter_account():
             if created_raw:
                 created_date = created_raw.split('T')[0]
 
-        time.sleep(0.2)
+        time.sleep(0.1)
         
         avatar_req = session.get(f'https://avatar.roblox.com/v1/users/{user_id}/avatar')
         
@@ -596,7 +585,7 @@ def filter_account():
                 if asset_id in EIGHT_BIT_CROWN_IDS: 
                     has_crown_8bit = True
                     
-        time.sleep(0.2)
+        time.sleep(0.1)
         
         thumb_req = session.get(f'https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=150x150&format=Png&isCircular=true')
         avatar_url = None
@@ -605,7 +594,7 @@ def filter_account():
             if thumb_data:
                 avatar_url = thumb_data[0].get('imageUrl')
         
-        time.sleep(0.2)
+        time.sleep(0.1)
         
         # --- BAGIAN RAP ROLIMONS DENGAN LIBRARY ---
         rap_val = 0
