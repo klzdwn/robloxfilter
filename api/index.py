@@ -28,10 +28,6 @@ HTML_PAGE = """
         --danger: #ef4444;
         --warning: #f59e0b;
         --purple: #a855f7;
-        
-        /* Variabel Warna Neon */
-        --neon-blue: #00f3ff;
-        --neon-blue-hover: #00c2cc;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -87,7 +83,8 @@ HTML_PAGE = """
         margin-top: 5px;
     }
 
-    button { 
+    /* Base style untuk Button dan Label (Upload) */
+    button, .btn-upload { 
         background-color: var(--primary); 
         color: white; 
         border: none; 
@@ -99,34 +96,20 @@ HTML_PAGE = """
         font-size: 14px;
         transition: all 0.2s, transform 0.1s;
         flex: 1;
-    }
-    button:hover:not(:disabled) { background-color: var(--primary-hover); }
-    button:active:not(:disabled) { transform: scale(0.98); }
-    button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
-
-    .btn-danger { background-color: var(--danger); }
-    .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
-
-    /* --- TOMBOL UPLOAD DISAMAKAN DENGAN TOMBOL LAIN (BIRU PRIMARY) --- */
-    .btn-upload {
-        background-color: var(--primary);
-        color: white;
-        font-weight: 600;
+        text-align: center;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        border: none;
-        transition: background-color 0.2s, transform 0.1s;
-        text-shadow: none;
-        box-shadow: none;
+        box-sizing: border-box;
     }
-    .btn-upload:hover {
-        background-color: var(--primary-hover);
-    }
-    .btn-upload:active {
-        transform: scale(0.98);
-    }
+
+    button:hover:not(:disabled), .btn-upload:hover { background-color: var(--primary-hover); }
+    button:active:not(:disabled), .btn-upload:active { transform: scale(0.98); }
+    button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
+
+    .btn-danger { background-color: var(--danger); }
+    .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
 
     /* Sembunyikan input file asli */
     input[type="file"] { display: none; }
@@ -314,7 +297,7 @@ HTML_PAGE = """
         <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
         
         <div class="btn-group">
-            <!-- Label untuk upload file (Sekarang warnanya sama dengan Mulai Filter) -->
+            <!-- Label untuk upload file, udah dibenerin -->
             <label for="fileInput" class="btn-upload">
                 📁 Upload .txt
             </label>
