@@ -94,7 +94,23 @@ async function startFilter() {
 </html>
 """
 
-HEADLESS_IDS = [134082579, 15093053680] 
+# --- FIX TOTAL ID HEADLESS HORSEMAN (LENGKAP) ---
+HEADLESS_IDS = [
+    15093053680,    # Headless Head (Dynamic Head - versi baru)
+    131592085,      # Headless Horseman's New Head
+    134082453,      # Bagian dari bundle
+    134082473,      # Bagian dari bundle
+    134082507,      # Bagian dari bundle
+    134082533,      # Bagian dari bundle
+    134082557,      # Bagian dari bundle
+    131929448,      # Bagian dari bundle
+    11573370910,    # Bagian dari bundle
+    23452365716,    # Bagian dari bundle
+    134082579,      # Headless Head (Classic / Import ID)
+    134082613,      # AssetId lama
+    201             # Bundle ID Headless Horseman (sebagai cadangan)
+]
+
 KORBLOX_IDS = [139607718, 139607917, 2988500]
 
 # --- ID RESMI BUNDLE MALIVINIUS (ID 334) ---
@@ -165,11 +181,12 @@ def filter_account():
             assets = avatar_req.json().get('assets', [])
             for asset in assets:
                 asset_id = asset.get('id')
+                # Cek Headless (menggunakan list ID yang sudah lengkap)
                 if asset_id in HEADLESS_IDS:
                     has_headless = True
                 if asset_id in KORBLOX_IDS:
                     has_korblox = True
-                # Cek apakah ID aset di avatar ada di dalam list MALIVINUS_IDS
+                # Cek Malivinus
                 if asset_id in MALIVINUS_IDS:
                     has_malivinus = True
                     
@@ -202,7 +219,7 @@ def filter_account():
             'created': created_date,
             'avatar': avatar_url,
             'korblox': has_korblox,
-            'korles': has_korblox and has_headless,
+            'korles': has_korblox and has_headless, # Korles = Korblox + Headless
             'rap': rap_val,
             'limiteds': ltd_val,
             'malivinus': has_malivinus
