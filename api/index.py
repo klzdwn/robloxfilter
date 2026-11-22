@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template_string
 import requests
 import time
-import rolimons  # --- TAMBAHAN BARU ---
+import rolimons
 
 app = Flask(__name__)
 
@@ -17,11 +17,11 @@ HTML_PAGE = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
-        --bg-color: #0f172a;
-        --panel-bg: #1e293b;
+        --bg-color: #0b1120;
+        --panel-bg: #151e2e;
         --text-main: #e2e8f0;
-        --text-muted: #94a3b8;
-        --border-color: #334155;
+        --text-muted: #64748b;
+        --border-color: #1e293b;
         --primary: #3b82f6;
         --primary-hover: #2563eb;
         --success: #10b981;
@@ -36,83 +36,91 @@ HTML_PAGE = """
         background-color: var(--bg-color); 
         color: var(--text-main); 
         font-family: 'Inter', sans-serif; 
-        padding: 20px 15px; 
+        padding: 15px 10px; 
         display: flex;
         flex-direction: column;
         align-items: center;
+        font-size: 12px;
     }
 
     .container {
         width: 100%;
-        max-width: 850px;
+        max-width: 750px;
     }
 
-    .header { margin-bottom: 20px; }
-    .header h2 { font-size: 22px; font-weight: 700; color: #fff; }
-    .header p { font-size: 13px; color: var(--text-muted); margin-top: 5px; }
+    .header { margin-bottom: 15px; text-align: center; }
+    .header h2 { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px;}
+    .header p { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
     .input-group {
         background: var(--panel-bg);
-        padding: 15px;
-        border-radius: 12px;
+        padding: 12px;
+        border-radius: 10px;
         border: 1px solid var(--border-color);
-        margin-bottom: 25px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
     textarea { 
         width: 100%; 
-        height: 100px; 
+        height: 80px; 
         background-color: #0b1120; 
-        color: #60a5fa; 
+        color: #93c5fd; 
         border: 1px solid var(--border-color); 
-        border-radius: 8px;
-        padding: 12px; 
+        border-radius: 6px;
+        padding: 10px; 
         font-family: 'Inter', monospace; 
-        font-size: 13px;
+        font-size: 11px;
         resize: vertical;
         transition: border-color 0.2s;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
     textarea:focus { outline: none; border-color: var(--primary); }
 
     .btn-group {
         display: flex;
-        gap: 8px;
-        margin-top: 5px;
+        gap: 6px;
     }
 
     button, .btn-upload { 
         background-color: var(--primary); 
         color: white; 
         border: none; 
-        padding: 12px 15px; 
+        padding: 8px 12px; 
         cursor: pointer; 
         font-weight: 600; 
-        border-radius: 6px; 
+        border-radius: 5px; 
         font-family: 'Inter', sans-serif;
-        font-size: 13px;
-        transition: all 0.2s, transform 0.1s;
+        font-size: 11px;
+        transition: all 0.2s;
         flex: 1;
-        text-align: center;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
-        box-sizing: border-box;
-        height: 42px;
+        height: 34px;
     }
 
     button:hover:not(:disabled), .btn-upload:hover { background-color: var(--primary-hover); }
-    button:active:not(:disabled), .btn-upload:active { transform: scale(0.98); }
-    button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
-
+    button:disabled { background-color: #334155; cursor: not-allowed; opacity: 0.7; }
     .btn-danger { background-color: var(--danger); }
     .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
 
     input[type="file"] { display: none; }
 
-    /* --- LAYOUT LIST SIMPEL --- */
+    /* --- PERINGATAN DI BAWAH TOMBOL --- */
+    .warning-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        font-size: 10px;
+        color: var(--warning);
+        margin-top: 10px;
+        text-align: center;
+        opacity: 0.8;
+    }
+
+    /* --- LIST ELEGAN & KECIL --- */
     .results-list {
         display: flex;
         flex-direction: column;
@@ -123,50 +131,44 @@ HTML_PAGE = """
     }
 
     .result-row {
-        padding: 12px 15px;
-        border-bottom: 1px solid var(--border-color);
+        padding: 10px 12px;
+        border-bottom: 1px solid #1e293b;
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        transition: background 0.2s;
+        gap: 6px;
     }
     .result-row:last-child { border-bottom: none; }
-    .result-row:hover { background: #1e293b; }
+    .result-row:hover { background: #1a2436; }
 
-    /* Baris Atas */
     .row-top {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 6px;
-        font-size: 13px;
+        gap: 5px;
         color: #fff;
     }
     
-    /* NOMOR URUT DIPERBARUI: Tanpa kotak biru, abu-abu */
     .row-number {
         color: var(--text-muted);
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
-        margin-right: 4px;
-        flex-shrink: 0;
+        margin-right: 2px;
+        min-width: 15px;
     }
 
-    .main-text { font-weight: 600; color: #fff; }
-    .label-text { color: var(--text-muted); font-weight: 400; font-size: 12px; }
-    .country-text { color: var(--warning); font-weight: 500; font-size: 12px; margin-left: auto; }
+    .main-text { font-weight: 600; color: #f8fafc; font-size: 12px;}
+    .label-text { color: var(--text-muted); font-weight: 400; font-size: 11px; }
     
-    /* Baris Bawah */
     .row-bottom {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding-left: 20px;
+        gap: 10px;
+        padding-left: 18px;
     }
 
     .row-avatar {
-        width: 32px;
-        height: 32px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         border: 1px solid var(--border-color);
         object-fit: cover;
@@ -178,64 +180,63 @@ HTML_PAGE = """
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         flex: 1;
-        font-size: 11px;
+        font-size: 10px;
     }
 
-    /* Teks Status Minimalis */
     .stat-item {
         display: flex;
         align-items: center;
-        gap: 4px;
-        color: var(--text-muted);
+        gap: 3px;
+        color: #475569;
+        font-weight: 500;
     }
-    .stat-item b { font-weight: 600; }
-    .stat-yes { color: var(--success); }
-    .stat-rap { color: var(--purple); }
+    .stat-item b { font-weight: 600; color: #64748b;}
+    
+    .stat-yes { color: var(--success); font-weight: 600;}
+    .stat-yes b { color: var(--success); }
+    .stat-rap { color: var(--purple); font-weight: 600;}
+    .stat-rap b { color: var(--purple); }
+    
+    .date-text { color: #94a3b8; }
 
-    /* Status Not Found */
     .not-found-box {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         color: var(--danger);
         font-weight: 600;
-        font-size: 12px;
-        padding-left: 20px;
+        font-size: 11px;
+        padding-left: 18px;
     }
 
-    /* Custom Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(3px);
         display: flex; align-items: center; justify-content: center;
-        z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.2s ease;
     }
     .modal-overlay.active { opacity: 1; visibility: visible; }
     .modal-box {
         background: var(--panel-bg); border: 1px solid var(--border-color);
-        border-radius: 12px; padding: 20px; max-width: 300px; width: 90%;
+        border-radius: 8px; padding: 15px; max-width: 280px; width: 90%;
         text-align: center; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-        transform: translateY(20px); transition: transform 0.3s ease;
+        transform: translateY(10px); transition: transform 0.2s ease;
     }
     .modal-overlay.active .modal-box { transform: translateY(0); }
-    .modal-icon { font-size: 30px; margin-bottom: 10px; }
-    .modal-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-    .modal-message { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+    .modal-icon { font-size: 24px; margin-bottom: 8px; }
+    .modal-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 5px; }
+    .modal-message { font-size: 11px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.4; }
     .modal-btn {
         background: var(--primary); color: white; border: none;
-        padding: 8px 15px; border-radius: 6px; font-weight: 600;
-        font-size: 13px; cursor: pointer; width: 100%; transition: background 0.2s;
+        padding: 8px 15px; border-radius: 5px; font-weight: 600;
+        font-size: 11px; cursor: pointer; width: 100%;
     }
-    .modal-btn:hover { background: var(--primary-hover); }
 
     @media (max-width: 600px) {
         .btn-group { flex-direction: column; }
-        .row-top { font-size: 12px; }
-        .country-text { margin-left: 0; width: 100%; display: block; margin-top: 2px; }
-        .row-bottom { padding-left: 0; }
-        .not-found-box { padding-left: 0; }
+        .country-text { margin-left: 0; width: 100%; display: block; }
     }
 
 </style>
@@ -245,7 +246,7 @@ HTML_PAGE = """
 <div class="container">
     <div class="header">
         <h2>R0bl0x F1lt3r</h2>
-        <p>Format Input: <b>usn:pw:ip</b></p>
+        <p>usn:pw:ip</p>
     </div>
 
     <div class="input-group">
@@ -256,6 +257,11 @@ HTML_PAGE = """
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
             <button id="stopBtn" class="btn-danger" onclick="stopFilter()" disabled>Stop</button>
+        </div>
+
+        <!-- TEKS PERINGATAN BARU -->
+        <div class="warning-text">
+            <span>ℹ️</span> Tetap stay di website. Jika keluar, sistem akan menerapkan fitur jeda otomatis.
         </div>
     </div>
 
@@ -274,6 +280,15 @@ HTML_PAGE = """
 <script>
 let isProcessing = false;
 let currentAbortController = null;
+let isPaused = false;
+
+document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+        isPaused = true; 
+    } else {
+        isPaused = false; 
+    }
+});
 
 function showModal(title, message) {
     document.getElementById('modalTitle').innerText = title;
@@ -299,6 +314,7 @@ function handleFileUpload(event) {
 function stopFilter() {
     if (currentAbortController) currentAbortController.abort();
     isProcessing = false;
+    isPaused = false;
     updateButtons();
 }
 
@@ -314,21 +330,6 @@ function updateButtons() {
         btnFilter.disabled = false;
         btnFilter.innerText = "Mulai Filter";
         btnStop.disabled = true;
-    }
-}
-
-// Fungsi Fetch dengan Auto-Retry (Mengatasi error saat pindah app)
-async function fetchWithRetry(url, options, retries = 3, backoff = 1000) {
-    try {
-        const res = await fetch(url, options);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res;
-    } catch (e) {
-        if (retries > 0 && e.name !== 'AbortError') {
-            await new Promise(resolve => setTimeout(resolve, backoff));
-            return fetchWithRetry(url, options, retries - 1, backoff * 1.5);
-        }
-        throw e;
     }
 }
 
@@ -352,21 +353,25 @@ async function startFilter() {
     for (let line of lines) {
         if (!isProcessing) break;
 
+        while (isPaused && isProcessing) {
+            await new Promise(resolve => setTimeout(resolve, 500)); 
+        }
+        if (!isProcessing) break; 
+
         let parts = line.split(':');
         if(parts.length >= 3) {
             let usn = parts[0].trim();
             let pw = parts[1].trim();
             let ip = parts[2].trim();
-            let numStr = counter.toString(); // Hapus angka 0 di depan
+            let numStr = counter.toString(); 
             
-            // Loading Row
             let row = document.createElement('div');
             row.className = 'result-row';
             row.innerHTML = `
                 <div class="row-top">
                     <span class="row-number">${numStr}.</span>
                     <span class="label-text">USN:</span> <span class="main-text">${usn}</span> <span class="label-text">| PW:</span> <span class="main-text">${pw}</span>
-                    <span class="country-text">Loading...</span>
+                    <span class="label-text" style="color:var(--warning); margin-left:auto;">Loading...</span>
                 </div>
             `;
             resultsContainer.appendChild(row);
@@ -376,8 +381,7 @@ async function startFilter() {
                 currentAbortController = new AbortController();
                 const signal = currentAbortController.signal;
 
-                // GUNAKAN fetchWithRetry
-                let res = await fetchWithRetry('/filter', {
+                let res = await fetch('/filter', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({usn: usn, ip: ip}),
@@ -415,7 +419,7 @@ async function startFilter() {
                         <div class="row-bottom">
                             ${imgTag}
                             <div class="row-info">
-                                <span class="stat-item" style="color:var(--text-main); font-weight:500;">📅 ${data.created}</span>
+                                <span class="stat-item date-text">📅 ${data.created}</span>
                                 ${korblox}
                                 ${korles}
                                 ${mali}
@@ -438,7 +442,7 @@ async function startFilter() {
                     row.innerHTML = `
                         <div class="row-top">
                             <span class="row-number" style="color:var(--danger)">${numStr}.</span>
-                            <span class="main-text" style="color:var(--danger)">Gagal terhubung ke server (Error Jaringan).</span>
+                            <span class="main-text" style="color:var(--danger)">Koneksi terputus (Error Jaringan).</span>
                         </div>
                     `;
                 }
