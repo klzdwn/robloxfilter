@@ -44,7 +44,7 @@ HTML_PAGE = """
 
     .container {
         width: 100%;
-        max-width: 800px;
+        max-width: 850px;
     }
 
     .header { margin-bottom: 20px; }
@@ -86,7 +86,7 @@ HTML_PAGE = """
         background-color: var(--primary); 
         color: white; 
         border: none; 
-        padding: 10px 15px; 
+        padding: 12px 15px; 
         cursor: pointer; 
         font-weight: 600; 
         border-radius: 6px; 
@@ -100,6 +100,7 @@ HTML_PAGE = """
         justify-content: center;
         gap: 6px;
         box-sizing: border-box;
+        height: 42px; /* Tinggi fix biar rapi */
     }
 
     button:hover:not(:disabled), .btn-upload:hover { background-color: var(--primary-hover); }
@@ -111,40 +112,42 @@ HTML_PAGE = """
 
     input[type="file"] { display: none; }
 
-    /* --- LAYOUT LIST SIMPEL --- */
+    /* --- LAYOUT LIST SIMPEL (TANPA KOTAK BERLEBIHAN) --- */
     .results-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        background: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
     }
 
     .result-row {
-        background: var(--panel-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 8px 12px;
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
         transition: background 0.2s;
-        font-size: 12px;
     }
-    .result-row:hover { background: #1e293b; border-color: #475569; }
+    .result-row:last-child { border-bottom: none; }
+    .result-row:hover { background: #1e293b; }
 
-    /* Baris Atas: Teks Utama */
+    /* Baris Atas */
     .row-top {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 6px;
+        font-size: 13px;
         color: #fff;
     }
     
     .row-number {
         background: var(--primary);
         color: white;
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -152,24 +155,23 @@ HTML_PAGE = """
         font-size: 10px;
         font-weight: 700;
         margin-right: 4px;
+        flex-shrink: 0;
     }
 
     .main-text { font-weight: 600; }
-    .sub-text { color: var(--text-muted); font-weight: 400; }
-    .country-text { color: var(--warning); font-weight: 500; margin-left: auto; font-size: 11px; }
+    .country-text { color: var(--warning); font-weight: 500; font-size: 11px; margin-left: auto; }
     
-    /* Baris Bawah: Info & Badge */
+    /* Baris Bawah */
     .row-bottom {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding-top: 6px;
-        border-top: 1px dashed #334155;
+        gap: 12px;
+        padding-left: 24px; /* Sejajar dengan teks atas */
     }
 
     .row-avatar {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         border: 1px solid var(--border-color);
         object-fit: cover;
@@ -181,21 +183,23 @@ HTML_PAGE = """
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
         flex: 1;
+        font-size: 11px;
     }
 
-    /* Badge Minimalis */
-    .badge {
-        font-size: 10px;
-        font-weight: 600;
-        padding: 2px 6px;
-        border-radius: 4px;
-        border: 1px solid;
+    /* Teks Status Minimalis */
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--text-muted); /* Warna abu-abu untuk yang No */
     }
-    .badge-yes { color: var(--success); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
-    .badge-rap { color: var(--purple); border-color: rgba(168, 85, 247, 0.3); background: rgba(168, 85, 247, 0.1); }
-    .badge-date { color: var(--text-muted); border-color: transparent; background: transparent; padding-left: 0; font-weight: 500;}
+    .stat-item b { font-weight: 600; }
+    
+    /* Warna kalau Yes */
+    .stat-yes { color: var(--success); }
+    .stat-rap { color: var(--purple); }
 
     /* Status Not Found */
     .not-found-box {
@@ -205,6 +209,7 @@ HTML_PAGE = """
         color: var(--danger);
         font-weight: 600;
         font-size: 12px;
+        padding-left: 24px;
     }
 
     /* Custom Modal */
@@ -234,8 +239,10 @@ HTML_PAGE = """
 
     @media (max-width: 600px) {
         .btn-group { flex-direction: column; }
-        .row-top { font-size: 11px; }
+        .row-top { font-size: 12px; }
         .country-text { margin-left: 0; width: 100%; display: block; margin-top: 2px; }
+        .row-bottom { padding-left: 0; }
+        .not-found-box { padding-left: 0; }
     }
 
 </style>
@@ -351,7 +358,7 @@ async function startFilter() {
                 <div class="row-top">
                     <div class="row-number">${numStr}</div>
                     <span class="main-text">${usn} : ${pw}</span>
-                    <span class="sub-text">| Loading...</span>
+                    <span class="country-text">Loading...</span>
                 </div>
             `;
             resultsContainer.appendChild(row);
@@ -376,7 +383,7 @@ async function startFilter() {
                             <div class="row-number" style="background:var(--danger)">${numStr}</div>
                             <span class="main-text" style="color:var(--danger)">${usn} : ${pw}</span>
                         </div>
-                        <div class="row-bottom not-found-box">
+                        <div class="not-found-box">
                             <div class="row-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:10px;">X</div>
                             <span>Banned / Not Found</span>
                         </div>
@@ -384,18 +391,13 @@ async function startFilter() {
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}" class="row-avatar" loading="lazy">` : `<div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
                     
-                    // LOGIKA SIMPEL: Hanya tampilkan badge jika "Yes"
-                    let badgesHtml = '';
-                    if (data.korblox) badgesHtml += `<span class="badge badge-yes">Korblox</span>`;
-                    if (data.korles) badgesHtml += `<span class="badge badge-yes">Korles</span>`;
-                    if (data.malivinus) badgesHtml += `<span class="badge badge-yes">Malivinus</span>`;
-                    if (data.crown_8bit) badgesHtml += `<span class="badge badge-yes">8Bit</span>`;
-                    if (data.rap > 0) badgesHtml += `<span class="badge badge-rap">${data.rap.toLocaleString()} RAP</span>`;
+                    // LOGIKA STATUS: Tetap tampilkan semua, bedakan warna
+                    let korblox = data.korblox ? `<span class="stat-item stat-yes">● Korblox: <b>Yes</b></span>` : `<span class="stat-item">○ Korblox: <b>No</b></span>`;
+                    let korles = data.korles ? `<span class="stat-item stat-yes">● Korles: <b>Yes</b></span>` : `<span class="stat-item">○ Korles: <b>No</b></span>`;
+                    let mali = data.malivinus ? `<span class="stat-item stat-yes">● Malivinus: <b>Yes</b></span>` : `<span class="stat-item">○ Malivinus: <b>No</b></span>`;
+                    let bit8 = data.crown_8bit ? `<span class="stat-item stat-yes">● 8Bit: <b>Yes</b></span>` : `<span class="stat-item">○ 8Bit: <b>No</b></span>`;
                     
-                    // Jika tidak ada badge "Yes" sama sekali, beri teks biasa
-                    if (badgesHtml === '') {
-                        badgesHtml = `<span class="sub-text" style="font-size: 11px;">No Rare Items</span>`;
-                    }
+                    let rapText = data.rap > 0 ? `<span class="stat-item stat-rap">● RAP: <b>${data.rap.toLocaleString()}</b></span>` : `<span class="stat-item">○ RAP: <b>Priv/None</b></span>`;
 
                     row.innerHTML = `
                         <div class="row-top">
@@ -406,8 +408,12 @@ async function startFilter() {
                         <div class="row-bottom">
                             ${imgTag}
                             <div class="row-info">
-                                <span class="badge badge-date">📅 ${data.created}</span>
-                                ${badgesHtml}
+                                <span class="stat-item" style="color:var(--text-main); font-weight:500;">📅 ${data.created}</span>
+                                ${korblox}
+                                ${korles}
+                                ${mali}
+                                ${bit8}
+                                ${rapText}
                             </div>
                         </div>
                     `;
@@ -417,7 +423,7 @@ async function startFilter() {
                     row.innerHTML = `
                         <div class="row-top">
                             <div class="row-number" style="background:var(--warning)">${numStr}</div>
-                            <span class="sub-text" style="color:var(--warning)">Dibatalkan.</span>
+                            <span class="main-text" style="color:var(--warning)">Dibatalkan.</span>
                         </div>
                     `;
                     break;
@@ -425,7 +431,7 @@ async function startFilter() {
                     row.innerHTML = `
                         <div class="row-top">
                             <div class="row-number" style="background:var(--danger)">${numStr}</div>
-                            <span class="sub-text" style="color:var(--danger)">Error jaringan.</span>
+                            <span class="main-text" style="color:var(--danger)">Error jaringan.</span>
                         </div>
                     `;
                 }
