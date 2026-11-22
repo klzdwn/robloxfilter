@@ -72,26 +72,47 @@ HTML_PAGE = """
         font-size: 13px;
         resize: vertical;
         transition: border-color 0.2s;
+        margin-bottom: 10px;
     }
     textarea:focus { outline: none; border-color: var(--primary); }
+
+    /* Tombol Group */
+    .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 5px;
+    }
 
     button { 
         background-color: var(--primary); 
         color: white; 
         border: none; 
-        padding: 14px 20px; 
+        padding: 12px 20px; 
         cursor: pointer; 
         font-weight: 600; 
-        margin-top: 12px; 
-        width: 100%; 
         border-radius: 8px; 
         font-family: 'Inter', sans-serif;
-        font-size: 15px;
+        font-size: 14px;
         transition: background-color 0.2s, transform 0.1s;
+        flex: 1;
     }
     button:hover:not(:disabled) { background-color: var(--primary-hover); }
     button:active:not(:disabled) { transform: scale(0.98); }
     button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
+
+    .btn-danger { background-color: var(--danger); }
+    .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
+
+    .btn-upload {
+        background-color: #334155;
+        border: 1px dashed #475569;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    .btn-upload:hover { background-color: #475569; color: #fff;}
+
+    /* Sembunyikan input file asli */
+    input[type="file"] { display: none; }
 
     /* --- LAYOUT LIST --- */
     .results-list {
@@ -127,6 +148,21 @@ HTML_PAGE = """
     }
     .row-top .separator { color: var(--text-muted); font-weight: 400; }
     .row-top .label { color: var(--text-muted); font-weight: 500; }
+    
+    /* Nomor Urut */
+    .row-number {
+        background: var(--primary);
+        color: white;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        margin-right: 5px;
+    }
     
     /* Baris Bawah */
     .row-bottom {
@@ -178,6 +214,7 @@ HTML_PAGE = """
         .row-top { font-size: 12px; gap: 5px; }
         .row-bottom { gap: 10px; }
         .status-item { font-size: 10px; padding: 2px 6px; }
+        .btn-group { flex-direction: column; }
     }
 
 </style>
@@ -191,8 +228,19 @@ HTML_PAGE = """
     </div>
 
     <div class="input-group">
+        <!-- TEXTAREA TETAP ADA -->
         <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
-        <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
+        
+        <div class="btn-group">
+            <!-- Label untuk upload file -->
+            <label for="fileInput" class="btn-upload" style="display:flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; padding: 12px 20px; font-size:14px; text-align:center;">
+                📁 Upload .txt
+            </label>
+            <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
+            
+            <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
+            <button id="stopBtn" class="btn-danger" onclick="stopFilter()" disabled>Berhenti</button>
+        </div>
     </div>
 
     <!-- Container untuk List -->
@@ -200,29 +248,80 @@ HTML_PAGE = """
 </div>
 
 <script>
+let isProcessing = false;
+let currentAbortController = null;
+
+// Fitur Upload File TXT
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        // Masukkan isi file ke textarea (menggantikan teks lama atau menambahkan)
+        document.getElementById('data').value = content;
+    };
+    reader.readAsText(file);
+    
+    // Reset input agar bisa upload file yang sama lagi jika diperlukan
+    event.target.value = '';
+}
+
+// Fitur Stop Filter
+function stopFilter() {
+    if (currentAbortController) {
+        currentAbortController.abort(); // Batalkan request yang sedang berjalan
+    }
+    isProcessing = false;
+    updateButtons();
+}
+
+function updateButtons() {
+    const btnFilter = document.getElementById('filterBtn');
+    const btnStop = document.getElementById('stopBtn');
+    
+    if (isProcessing) {
+        btnFilter.disabled = true;
+        btnFilter.innerText = "Memproses...";
+        btnStop.disabled = false;
+    } else {
+        btnFilter.disabled = false;
+        btnFilter.innerText = "Mulai Filter";
+        btnStop.disabled = true;
+    }
+}
+
 async function startFilter() {
-    const btn = document.getElementById('filterBtn');
+    if (isProcessing) return;
+    
     const lines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
     const resultsContainer = document.getElementById('results');
     
     if(lines.length === 0) return alert("Masukkan data terlebih dahulu!");
     
     resultsContainer.innerHTML = '';
-    btn.disabled = true;
-    btn.innerText = "Memproses...";
+    isProcessing = true;
+    updateButtons();
+
+    let counter = 1;
 
     for (let line of lines) {
+        if (!isProcessing) break; // Hentikan loop jika tombol stop ditekan
+
         let parts = line.split(':');
         if(parts.length >= 3) {
             let usn = parts[0].trim();
             let pw = parts[1].trim();
             let ip = parts[2].trim();
+            let numStr = counter.toString().padStart(2, '0'); // Format jadi 01, 02, dst
             
             // Buat Row Loading
             let row = document.createElement('div');
             row.className = 'result-row';
             row.innerHTML = `
                 <div class="row-top">
+                    <div class="row-number">${numStr}</div>
                     <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
                     <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
                     <span class="label">IP:</span> <span>${ip}</span>
@@ -233,12 +332,18 @@ async function startFilter() {
                 </div>
             `;
             resultsContainer.appendChild(row);
+            counter++;
 
             try {
+                // Siapkan AbortController untuk fitur berhenti
+                currentAbortController = new AbortController();
+                const signal = currentAbortController.signal;
+
                 let res = await fetch('/filter', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({usn: usn, ip: ip})
+                    body: JSON.stringify({usn: usn, ip: ip}),
+                    signal: signal // Tambahkan signal untuk abort
                 });
                 
                 let data = await res.json();
@@ -246,6 +351,7 @@ async function startFilter() {
                 if (data.status === 'Not Found') {
                     row.innerHTML = `
                         <div class="row-top">
+                            <div class="row-number" style="background:var(--danger)">${numStr}</div>
                             <span class="label" style="color:var(--danger)">USN:</span> <span>${usn}</span> <span class="separator">|</span>
                             <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
                             <span class="label">IP:</span> <span>${ip}</span> 
@@ -263,8 +369,9 @@ async function startFilter() {
                     let rapClass = data.rap > 0 ? 'badge-rap' : 'badge-no';
 
                     row.innerHTML = `
-                        <!-- BARIS ATAS: USN, PW, IP (Negara), TANGGAL -->
+                        <!-- BARIS ATAS: NOMOR, USN, PW, IP, TANGGAL -->
                         <div class="row-top">
+                            <div class="row-number">${numStr}</div>
                             <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
                             <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
                             <span class="label">IP:</span> <span>${data.country}</span> <span class="separator">|</span>
@@ -285,20 +392,35 @@ async function startFilter() {
                     `;
                 }
             } catch (e) {
-                row.innerHTML = `
-                    <div class="row-top">
-                        <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
-                        <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
-                        <span class="label">IP:</span> <span>${ip}</span>
-                    </div>
-                    <div class="error-box">Kesalahan jaringan.</div>
-                `;
+                if (e.name === 'AbortError') {
+                    // Jika dihentikan paksa oleh user
+                    row.innerHTML = `
+                        <div class="row-top">
+                            <div class="row-number" style="background:var(--warning)">${numStr}</div>
+                            <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
+                            <span class="label" style="color:var(--warning)">Dibatalkan.</span>
+                        </div>
+                    `;
+                    break; // Hentikan loop for
+                } else {
+                    // Error jaringan biasa
+                    row.innerHTML = `
+                        <div class="row-top">
+                            <div class="row-number" style="background:var(--danger)">${numStr}</div>
+                            <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
+                            <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
+                            <span class="label">IP:</span> <span>${ip}</span>
+                        </div>
+                        <div class="error-box">Kesalahan jaringan.</div>
+                    `;
+                }
             }
+            currentAbortController = null; // Reset controller setelah selesai
         }
     }
     
-    btn.disabled = false;
-    btn.innerText = "Mulai Filter";
+    isProcessing = false;
+    updateButtons();
 }
 </script>
 </body>
