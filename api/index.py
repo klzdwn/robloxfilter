@@ -17,11 +17,11 @@ HTML_PAGE = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
-        --bg-color: #0b1120;
-        --panel-bg: #151e2e;
+        --bg-color: #0f172a;
+        --panel-bg: #1e293b;
         --text-main: #e2e8f0;
-        --text-muted: #64748b;
-        --border-color: #1e293b;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
         --primary: #3b82f6;
         --primary-hover: #2563eb;
         --success: #10b981;
@@ -36,72 +36,75 @@ HTML_PAGE = """
         background-color: var(--bg-color); 
         color: var(--text-main); 
         font-family: 'Inter', sans-serif; 
-        padding: 15px 10px; 
+        padding: 20px 15px; 
         display: flex;
         flex-direction: column;
         align-items: center;
-        font-size: 12px;
     }
 
     .container {
         width: 100%;
-        max-width: 750px;
+        max-width: 1000px;
     }
 
-    .header { margin-bottom: 15px; text-align: center; }
-    .header h2 { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px;}
-    .header p { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .header { margin-bottom: 20px; text-align: center; }
+    .header h2 { font-size: 22px; font-weight: 700; color: #fff; }
+    .header p { font-size: 13px; color: var(--text-muted); margin-top: 5px; }
 
     .input-group {
         background: var(--panel-bg);
-        padding: 12px;
-        border-radius: 10px;
+        padding: 15px;
+        border-radius: 12px;
         border: 1px solid var(--border-color);
-        margin-bottom: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
     textarea { 
         width: 100%; 
-        height: 80px; 
+        height: 100px; 
         background-color: #0b1120; 
-        color: #93c5fd; 
+        color: #60a5fa; 
         border: 1px solid var(--border-color); 
-        border-radius: 6px;
-        padding: 10px; 
+        border-radius: 8px;
+        padding: 12px; 
         font-family: 'Inter', monospace; 
-        font-size: 11px;
+        font-size: 13px;
         resize: vertical;
         transition: border-color 0.2s;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
     textarea:focus { outline: none; border-color: var(--primary); }
 
     .btn-group {
         display: flex;
-        gap: 6px;
+        gap: 10px;
     }
 
     button, .btn-upload { 
         background-color: var(--primary); 
         color: white; 
         border: none; 
-        padding: 8px 12px; 
+        padding: 12px 15px; 
         cursor: pointer; 
         font-weight: 600; 
-        border-radius: 5px; 
+        border-radius: 6px; 
         font-family: 'Inter', sans-serif;
-        font-size: 11px;
-        transition: all 0.2s;
+        font-size: 13px;
+        transition: all 0.2s, transform 0.1s;
         flex: 1;
+        text-align: center;
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 34px;
+        gap: 6px;
+        height: 40px;
     }
 
     button:hover:not(:disabled), .btn-upload:hover { background-color: var(--primary-hover); }
-    button:disabled { background-color: #334155; cursor: not-allowed; opacity: 0.7; }
+    button:active:not(:disabled), .btn-upload:active { transform: scale(0.98); }
+    button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
+
     .btn-danger { background-color: var(--danger); }
     .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
 
@@ -113,132 +116,93 @@ HTML_PAGE = """
         align-items: center;
         justify-content: center;
         gap: 5px;
-        font-size: 10px;
+        font-size: 11px;
         color: var(--warning);
-        margin-top: 10px;
+        margin-top: 12px;
         text-align: center;
-        opacity: 0.8;
+        opacity: 0.9;
     }
 
-    /* --- LIST ELEGAN & KECIL --- */
-    .results-list {
-        display: flex;
-        flex-direction: column;
+    /* --- TABEL (GRID) STYLING --- */
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto; /* Agar bisa di-scroll ke kanan di HP */
         background: var(--panel-bg);
-        border: 1px solid var(--border-color);
         border-radius: 10px;
-        overflow: hidden;
-    }
-
-    .result-row {
-        padding: 10px 12px;
-        border-bottom: 1px solid #1e293b;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-    .result-row:last-child { border-bottom: none; }
-    .result-row:hover { background: #1a2436; }
-
-    .row-top {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 5px;
-        color: #fff;
-    }
-    
-    .row-number {
-        color: var(--text-muted);
-        font-size: 11px;
-        font-weight: 600;
-        margin-right: 2px;
-        min-width: 15px;
-    }
-
-    .main-text { font-weight: 600; color: #f8fafc; font-size: 12px;}
-    .label-text { color: var(--text-muted); font-weight: 400; font-size: 11px; }
-    
-    .row-bottom {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding-left: 18px;
-    }
-
-    .row-avatar {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
         border: 1px solid var(--border-color);
-        object-fit: cover;
-        background: #0b1120;
-        flex-shrink: 0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    .row-info {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-        flex: 1;
-        font-size: 10px;
+    table {
+        width: 100%;
+        min-width: 800px; /* Lebar minimum agar tidak gepeng */
+        border-collapse: collapse;
+        font-size: 12px;
+        text-align: left;
     }
 
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        color: #475569;
-        font-weight: 500;
-    }
-    .stat-item b { font-weight: 600; color: #64748b;}
-    
-    .stat-yes { color: var(--success); font-weight: 600;}
-    .stat-yes b { color: var(--success); }
-    .stat-rap { color: var(--purple); font-weight: 600;}
-    .stat-rap b { color: var(--purple); }
-    
-    .date-text { color: #94a3b8; }
-
-    .not-found-box {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--danger);
+    th {
+        background-color: #0b1120;
+        color: var(--text-muted);
         font-weight: 600;
-        font-size: 11px;
-        padding-left: 18px;
+        padding: 12px 10px;
+        border-bottom: 2px solid var(--border-color);
+        white-space: nowrap;
     }
 
+    td {
+        padding: 10px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+
+    tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+
+    /* Kolom Spesifik */
+    .col-num { width: 30px; text-align: center; color: var(--text-muted); font-weight: 600; }
+    .col-usn { font-weight: 600; color: #fff; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+    .col-pw { color: var(--text-muted); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+    .col-ip { color: var(--warning); font-weight: 500; }
+    .col-date { color: var(--text-muted); white-space: nowrap;}
+    .col-avatar { width: 40px; text-align: center;}
+    .col-avatar img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; }
+    .col-status { white-space: nowrap; }
+    
+    /* Badge Warna */
+    .txt-yes { color: var(--success); font-weight: 700; }
+    .txt-no { color: var(--danger); font-weight: 500; }
+    .txt-rap { color: var(--purple); font-weight: 700; }
+    .txt-error { color: var(--danger); font-weight: 600; font-size: 11px;}
+
+    /* Custom Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(3px);
+        background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
         display: flex; align-items: center; justify-content: center;
-        z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.2s ease;
+        z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s ease;
     }
     .modal-overlay.active { opacity: 1; visibility: visible; }
     .modal-box {
         background: var(--panel-bg); border: 1px solid var(--border-color);
-        border-radius: 8px; padding: 15px; max-width: 280px; width: 90%;
+        border-radius: 12px; padding: 20px; max-width: 300px; width: 90%;
         text-align: center; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-        transform: translateY(10px); transition: transform 0.2s ease;
+        transform: translateY(20px); transition: transform 0.3s ease;
     }
     .modal-overlay.active .modal-box { transform: translateY(0); }
-    .modal-icon { font-size: 24px; margin-bottom: 8px; }
-    .modal-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 5px; }
-    .modal-message { font-size: 11px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.4; }
+    .modal-icon { font-size: 30px; margin-bottom: 10px; }
+    .modal-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .modal-message { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
     .modal-btn {
         background: var(--primary); color: white; border: none;
-        padding: 8px 15px; border-radius: 5px; font-weight: 600;
-        font-size: 11px; cursor: pointer; width: 100%;
+        padding: 8px 15px; border-radius: 6px; font-weight: 600;
+        font-size: 13px; cursor: pointer; width: 100%; transition: background 0.2s;
     }
+    .modal-btn:hover { background: var(--primary-hover); }
 
     @media (max-width: 600px) {
         .btn-group { flex-direction: column; }
-        .country-text { margin-left: 0; width: 100%; display: block; }
     }
-
 </style>
 </head>
 <body>
@@ -246,7 +210,7 @@ HTML_PAGE = """
 <div class="container">
     <div class="header">
         <h2>R0bl0x F1lt3r</h2>
-        <p>usn:pw:ip</p>
+        <p>Format Input: <b>usn:pw:ip</b></p>
     </div>
 
     <div class="input-group">
@@ -259,13 +223,32 @@ HTML_PAGE = """
             <button id="stopBtn" class="btn-danger" onclick="stopFilter()" disabled>Stop</button>
         </div>
 
-        <!-- TEKS PERINGATAN BARU -->
+        <!-- Teks Peringatan Fixed -->
         <div class="warning-text">
             <span>ℹ️</span> Tetap stay di website. Jika keluar, sistem akan menerapkan fitur jeda otomatis.
         </div>
     </div>
 
-    <div id="results" class="results-list"></div>
+    <!-- TABEL WRAPPER -->
+    <div class="table-wrapper">
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th class="col-num">No</th>
+                    <th>USN</th>
+                    <th>PW</th>
+                    <th>Negara (IP)</th>
+                    <th>Created</th>
+                    <th>Avatar</th>
+                    <th>Status</th>
+                    <th>RAP</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Baris akan dimasukkan lewat JS -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="modal-overlay" id="customModal">
@@ -337,14 +320,14 @@ async function startFilter() {
     if (isProcessing) return;
     
     const lines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
-    const resultsContainer = document.getElementById('results');
+    const tableBody = document.getElementById('tableBody');
     
     if(lines.length === 0) {
         showModal("Data Kosong", "Masukkan data terlebih dahulu!");
         return;
     }
     
-    resultsContainer.innerHTML = '';
+    tableBody.innerHTML = '';
     isProcessing = true;
     updateButtons();
 
@@ -365,16 +348,18 @@ async function startFilter() {
             let ip = parts[2].trim();
             let numStr = counter.toString(); 
             
-            let row = document.createElement('div');
-            row.className = 'result-row';
-            row.innerHTML = `
-                <div class="row-top">
-                    <span class="row-number">${numStr}.</span>
-                    <span class="label-text">USN:</span> <span class="main-text">${usn}</span> <span class="label-text">| PW:</span> <span class="main-text">${pw}</span>
-                    <span class="label-text" style="color:var(--warning); margin-left:auto;">Loading...</span>
-                </div>
+            // Cek apakah input berupa email
+            let isEmail = usn.includes('@'); 
+
+            // Buat baris Loading
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="col-num">${numStr}</td>
+                <td class="col-usn">${usn}</td>
+                <td class="col-pw">${pw}</td>
+                <td class="col-ip" colspan="4" style="color:var(--warning);">Loading...</td>
             `;
-            resultsContainer.appendChild(row);
+            tableBody.appendChild(tr);
             counter++;
 
             try {
@@ -390,60 +375,59 @@ async function startFilter() {
                 
                 let data = await res.json();
                 
-                if (data.status === 'Not Found') {
-                    row.innerHTML = `
-                        <div class="row-top">
-                            <span class="row-number" style="color:var(--danger)">${numStr}.</span>
-                            <span class="label-text" style="color:var(--danger)">USN:</span> <span class="main-text" style="color:var(--danger)">${usn}</span> <span class="label-text">| PW:</span> <span class="main-text" style="color:var(--danger)">${pw}</span>
-                        </div>
-                        <div class="not-found-box">
-                            <div class="row-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:10px;">X</div>
-                            <span>Banned / Not Found</span>
-                        </div>
+                // Jika Not Found ATAU input berupa email
+                if (data.status === 'Not Found' || isEmail) {
+                    let errorMsg = isEmail ? "Maaf data tidak ditemukan karena pakai email" : "Banned / Not Found";
+                    tr.innerHTML = `
+                        <td class="col-num" style="color:var(--danger)">${numStr}</td>
+                        <td class="col-usn" style="color:var(--danger)">${usn}</td>
+                        <td class="col-pw">${pw}</td>
+                        <td colspan="5" class="txt-error">${errorMsg}</td>
                     `;
                 } else {
-                    let imgTag = data.avatar ? `<img src="${data.avatar}" class="row-avatar" loading="lazy">` : `<div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
+                    let imgTag = data.avatar ? `<img src="${data.avatar}">` : `N/A`;
                     
-                    let korblox = data.korblox ? `<span class="stat-item stat-yes">● Korblox: <b>Yes</b></span>` : `<span class="stat-item">○ Korblox: <b>No</b></span>`;
-                    let korles = data.korles ? `<span class="stat-item stat-yes">● Korles: <b>Yes</b></span>` : `<span class="stat-item">○ Korles: <b>No</b></span>`;
-                    let mali = data.malivinus ? `<span class="stat-item stat-yes">● Malivinus: <b>Yes</b></span>` : `<span class="stat-item">○ Malivinus: <b>No</b></span>`;
-                    let bit8 = data.crown_8bit ? `<span class="stat-item stat-yes">● 8Bit: <b>Yes</b></span>` : `<span class="stat-item">○ 8Bit: <b>No</b></span>`;
+                    let statusKorblox = data.korblox ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
+                    let statusKorles = data.korles ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
+                    let statusMali = data.malivinus ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
+                    let status8bit = data.crown_8bit ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
                     
-                    let rapText = data.rap > 0 ? `<span class="stat-item stat-rap">● RAP: <b>${data.rap.toLocaleString()}</b></span>` : `<span class="stat-item">○ RAP: <b>Priv/None</b></span>`;
+                    // Gabungkan status dalam satu kolom
+                    let statusHtml = `
+                        <div style="line-height: 1.4;">
+                            <span style="color:var(--text-muted); font-size:10px;">Korblox:</span> ${statusKorblox}<br>
+                            <span style="color:var(--text-muted); font-size:10px;">Korles:</span> ${statusKorles}<br>
+                            <span style="color:var(--text-muted); font-size:10px;">Mali:</span> ${statusMali}<br>
+                            <span style="color:var(--text-muted); font-size:10px;">8Bit:</span> ${status8bit}
+                        </div>
+                    `;
 
-                    row.innerHTML = `
-                        <div class="row-top">
-                            <span class="row-number">${numStr}.</span>
-                            <span class="label-text">USN:</span> <span class="main-text">${usn}</span> <span class="label-text">| PW:</span> <span class="main-text">${pw}</span> <span class="label-text">| IP:</span> <span class="main-text">${data.country}</span>
-                        </div>
-                        <div class="row-bottom">
-                            ${imgTag}
-                            <div class="row-info">
-                                <span class="stat-item date-text">📅 ${data.created}</span>
-                                ${korblox}
-                                ${korles}
-                                ${mali}
-                                ${bit8}
-                                ${rapText}
-                            </div>
-                        </div>
+                    let rapText = data.rap > 0 ? `<span class="txt-rap">${data.rap.toLocaleString()}</span>` : `<span class="txt-no">Priv/None</span>`;
+
+                    tr.innerHTML = `
+                        <td class="col-num">${numStr}</td>
+                        <td class="col-usn">${usn}</td>
+                        <td class="col-pw">${pw}</td>
+                        <td class="col-ip">${data.country}</td>
+                        <td class="col-date">${data.created}</td>
+                        <td class="col-avatar">${imgTag}</td>
+                        <td class="col-status">${statusHtml}</td>
+                        <td class="col-rap">${rapText}</td>
                     `;
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    row.innerHTML = `
-                        <div class="row-top">
-                            <span class="row-number" style="color:var(--warning)">${numStr}.</span>
-                            <span class="label-text" style="color:var(--warning)">Dibatalkan.</span>
-                        </div>
+                    tr.innerHTML = `
+                        <td class="col-num" style="color:var(--warning)">${numStr}</td>
+                        <td colspan="7" style="color:var(--warning);">Dibatalkan.</td>
                     `;
                     break;
                 } else {
-                    row.innerHTML = `
-                        <div class="row-top">
-                            <span class="row-number" style="color:var(--danger)">${numStr}.</span>
-                            <span class="main-text" style="color:var(--danger)">Koneksi terputus (Error Jaringan).</span>
-                        </div>
+                    tr.innerHTML = `
+                        <td class="col-num" style="color:var(--danger)">${numStr}</td>
+                        <td class="col-usn" style="color:var(--danger)">${usn}</td>
+                        <td class="col-pw">${pw}</td>
+                        <td colspan="5" class="txt-error">Koneksi terputus (Error Jaringan).</td>
                     `;
                 }
             }
