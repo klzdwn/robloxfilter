@@ -28,6 +28,10 @@ HTML_PAGE = """
         --danger: #ef4444;
         --warning: #f59e0b;
         --purple: #a855f7;
+        
+        /* Variabel Warna Neon */
+        --neon-blue: #00f3ff;
+        --neon-blue-hover: #00c2cc;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -93,7 +97,7 @@ HTML_PAGE = """
         border-radius: 8px; 
         font-family: 'Inter', sans-serif;
         font-size: 14px;
-        transition: background-color 0.2s, transform 0.1s;
+        transition: all 0.2s, transform 0.1s;
         flex: 1;
     }
     button:hover:not(:disabled) { background-color: var(--primary-hover); }
@@ -103,13 +107,26 @@ HTML_PAGE = """
     .btn-danger { background-color: var(--danger); }
     .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
 
+    /* --- TOMBOL UPLOAD DISAMAKAN DENGAN TOMBOL LAIN (BIRU PRIMARY) --- */
     .btn-upload {
-        background-color: #334155;
-        border: 1px dashed #475569;
-        color: var(--text-muted);
-        font-weight: 500;
+        background-color: var(--primary);
+        color: white;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: none;
+        transition: background-color 0.2s, transform 0.1s;
+        text-shadow: none;
+        box-shadow: none;
     }
-    .btn-upload:hover { background-color: #475569; color: #fff;}
+    .btn-upload:hover {
+        background-color: var(--primary-hover);
+    }
+    .btn-upload:active {
+        transform: scale(0.98);
+    }
 
     /* Sembunyikan input file asli */
     input[type="file"] { display: none; }
@@ -209,6 +226,71 @@ HTML_PAGE = """
     .loading-box { text-align: center; padding: 15px; color: var(--warning); font-style: italic; font-size: 13px; }
     .error-box { color: var(--danger); font-weight: bold; font-size: 13px; }
 
+    /* --- CUSTOM MODAL POP-UP --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-box {
+        background: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 350px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.2);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+    .modal-overlay.active .modal-box {
+        transform: translateY(0);
+    }
+    .modal-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+    }
+    .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+    .modal-message {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+    .modal-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+    }
+    .modal-btn:hover {
+        background: var(--primary-hover);
+    }
+
     /* Responsif Mobile */
     @media (max-width: 600px) {
         .row-top { font-size: 12px; gap: 5px; }
@@ -232,8 +314,8 @@ HTML_PAGE = """
         <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
         
         <div class="btn-group">
-            <!-- Label untuk upload file -->
-            <label for="fileInput" class="btn-upload" style="display:flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; padding: 12px 20px; font-size:14px; text-align:center;">
+            <!-- Label untuk upload file (Sekarang warnanya sama dengan Mulai Filter) -->
+            <label for="fileInput" class="btn-upload">
                 📁 Upload .txt
             </label>
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
@@ -247,9 +329,31 @@ HTML_PAGE = """
     <div id="results" class="results-list"></div>
 </div>
 
+<!-- CUSTOM POP-UP MODAL -->
+<div class="modal-overlay" id="customModal">
+    <div class="modal-box">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title" id="modalTitle">Peringatan</div>
+        <div class="modal-message" id="modalMessage">Pesan peringatan di sini.</div>
+        <button class="modal-btn" onclick="closeModal()">Oke, Mengerti</button>
+    </div>
+</div>
+
 <script>
 let isProcessing = false;
 let currentAbortController = null;
+
+// Fungsi untuk memunculkan Custom Modal
+function showModal(title, message) {
+    document.getElementById('modalTitle').innerText = title;
+    document.getElementById('modalMessage').innerText = message;
+    document.getElementById('customModal').classList.add('active');
+}
+
+// Fungsi untuk menutup Custom Modal
+function closeModal() {
+    document.getElementById('customModal').classList.remove('active');
+}
 
 // Fitur Upload File TXT
 function handleFileUpload(event) {
@@ -298,7 +402,11 @@ async function startFilter() {
     const lines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
     const resultsContainer = document.getElementById('results');
     
-    if(lines.length === 0) return alert("Masukkan data terlebih dahulu!");
+    // Ganti alert bawaan dengan Custom Modal
+    if(lines.length === 0) {
+        showModal("Data Kosong", "Masukkan data terlebih dahulu sebelum memulai filter!");
+        return;
+    }
     
     resultsContainer.innerHTML = '';
     isProcessing = true;
