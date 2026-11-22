@@ -2,11 +2,10 @@ from flask import Flask, request, jsonify, render_template_string
 import requests
 import time
 import rolimons
-import ipaddress # <-- Tambahan untuk cek IPv6
+import ipaddress  # <-- Wajib ada untuk ngecek format IP
 
 app = Flask(__name__)
 
-# ... (Bagian HTML_PAGE tetap sama persis seperti yang kamu kirim sebelumnya) ...
 HTML_PAGE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -543,22 +542,28 @@ def filter_account():
         'Accept': 'application/json'
     })
     
+    # --- DETEKSI IP (IPv4 & IPv6) ---
     country_name = "Unknown"
-if ip_addr:
-    try:
-        # Pakai ipinfo.io yang lebih stabil
-        ip_req = requests.get(f'https://ipinfo.io/{ip_addr}/json', timeout=5)
-        if ip_req.status_code == 200:
-            data_ip = ip_req.json()
-            country_name = data_ip.get('country', 'Unknown')
+    if ip_addr:
+        try:
+            # Cek apakah formatnya valid (IPv4 atau IPv6)
+            ip_obj = ipaddress.ip_address(ip_addr)
             
-            # (Opsional) Ubah kode negara jadi nama negara
-            if country_name == 'ID': country_name = 'Indonesia'
-            elif country_name == 'US': country_name = 'United States'
-            elif country_name == 'PH': country_name = 'Philippines'
-            # dst...
-    except Exception:
-        country_name = "IP Error"
+            # Jika IP lokal (misal dari WiFi) kasih keterangan
+            if ip_obj.is_private:
+                country_name = "Private IP"
+            else:
+                # Pakai API ip-api.com (lebih stabil untuk IPv4)
+                ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
+                if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
+                    country_name = ip_req.json().get('country', 'Unknown')
+                else:
+                    country_name = "Not Found"
+                    
+        except ValueError:
+            country_name = "Invalid IP"
+        except Exception:
+            country_name = "IP Error"
     
     try:
         user_req = session.post('https://users.roblox.com/v1/usernames/users', json={
