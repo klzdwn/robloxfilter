@@ -97,14 +97,14 @@ async function startFilter() {
 HEADLESS_IDS = [134082579, 15093053680] 
 KORBLOX_IDS = [139607718, 139607917, 2988500]
 
-# --- ID MALIVINUS (LENGKAP SATU BADAN) ---
+# --- ID RESMI BUNDLE MALIVINIUS (ID 334) ---
 MALIVINUS_IDS = [
-    4682,               # Head
-    84563399526256,     # Torso
-    72144200325751,     # Right Arm
-    74873195978756,     # Left Arm (Recolorable)
-    130403685760932,    # Right Leg
-    140663034180170     # Left Leg
+    2807147467,       # Torso
+    2807142069,       # Left Arm
+    2807144777,       # Right Arm
+    2807143328,       # Left Leg
+    2807146071,       # Right Leg
+    126200552021824   # Head
 ]
 
 @app.route('/')
