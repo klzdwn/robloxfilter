@@ -75,10 +75,9 @@ HTML_PAGE = """
     }
     textarea:focus { outline: none; border-color: var(--primary); }
 
-    /* --- LAYOUT TOMBOL 2 BARIS (GRID) --- */
     .btn-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* 2 Kolom */
+        grid-template-columns: 1fr 1fr;
         gap: 8px;
     }
 
@@ -111,7 +110,6 @@ HTML_PAGE = """
 
     input[type="file"] { display: none; }
 
-    /* FIX TEKS PERINGATAN */
     .warning-text {
         display: flex;
         align-items: flex-start;
@@ -124,7 +122,6 @@ HTML_PAGE = """
     }
     .warning-text .icon { font-size: 12px; line-height: 1.2;}
 
-    /* --- TABEL RESPONSIF --- */
     .table-wrapper {
         width: 100%;
         background: var(--panel-bg);
@@ -156,7 +153,6 @@ HTML_PAGE = """
 
     tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
-    /* Lebar Kolom Spesifik */
     .col-num { width: 20px; text-align: center; color: var(--text-muted); }
     .col-avatar { width: 35px; text-align: center; padding: 4px;}
     .col-avatar img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; }
@@ -170,12 +166,10 @@ HTML_PAGE = """
     
     .col-rap { text-align: right; font-weight: bold; white-space: nowrap;}
 
-    /* Warna Teks */
     .txt-yes { color: var(--success); font-weight: 700; }
     .txt-no { color: var(--danger); }
     .txt-rap { color: var(--purple); }
     
-    /* TEKS EMAIL DIPERKECIL */
     .txt-error { 
         color: var(--danger); 
         font-style: italic; 
@@ -191,7 +185,6 @@ HTML_PAGE = """
         .col-pw { max-width: none; }
     }
 
-    /* Custom Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
@@ -226,7 +219,6 @@ HTML_PAGE = """
     <div class="input-group">
         <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
         
-        <!-- 4 TOMBOL DALAM 2 BARIS -->
         <div class="btn-grid">
             <label for="fileInput" class="btn-upload">📁 Upload .txt</label>
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
@@ -236,14 +228,12 @@ HTML_PAGE = """
             <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
         </div>
 
-        <!-- Teks Peringatan -->
         <div class="warning-text">
             <span class="icon">⚠️</span> 
             <span>Tetap stay di website. Jika keluar, sistem akan menerapkan fitur jeda otomatis.</span>
         </div>
     </div>
 
-    <!-- TABEL -->
     <div class="table-wrapper">
         <table id="resultTable">
             <thead>
@@ -258,9 +248,7 @@ HTML_PAGE = """
                     <th class="col-rap">RAP</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-                <!-- Baris data dimasukkan lewat JS -->
-            </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
@@ -312,16 +300,22 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
+// --- FIX LOGIKA STOP ---
 function stopFilter() {
     if (currentAbortController) currentAbortController.abort();
-    isProcessing = false;
+    
+    // Hentikan proses, tapi JANGAN reset currentIndex.
+    // Biarkan currentIndex tetap di posisi terakhir agar bisa dilanjutkan.
+    isProcessing = false; 
     isPaused = false;
-    isStopped = true;
+    isStopped = true; 
+    
     updateButtons();
 }
 
+// --- FITUR LANJUTKAN ---
 function resumeFilter() {
-    if (isProcessing) return;
+    if (isProcessing) return; // Abaikan jika sedang proses
     
     if (currentIndex >= currentLines.length) {
         showModal("Selesai", "Semua data sudah diproses.");
@@ -332,6 +326,7 @@ function resumeFilter() {
     isPaused = false;
     isProcessing = true;
     
+    // Lanjutkan proses dari currentIndex yang tersimpan
     processQueue();
 }
 
@@ -350,6 +345,7 @@ function updateButtons() {
         btnFilter.innerText = "Mulai Filter";
         btnStop.disabled = true;
         
+        // Tombol Lanjutkan hanya menyala jika proses di-Stop dan sisa data masih ada
         if (isStopped && currentIndex < currentLines.length) {
             btnResume.disabled = false;
         } else {
@@ -368,7 +364,7 @@ function startFilter() {
     }
     
     document.getElementById('tableBody').innerHTML = '';
-    currentIndex = 0;
+    currentIndex = 0; // Reset ke awal
     isStopped = false;
     isPaused = false;
     isProcessing = true;
@@ -381,9 +377,9 @@ async function processQueue() {
     const tableBody = document.getElementById('tableBody');
 
     for (let i = currentIndex; i < currentLines.length; i++) {
-        currentIndex = i;
+        currentIndex = i; // Simpan posisi index saat ini
 
-        if (!isProcessing) break;
+        if (!isProcessing) break; // Berhenti jika di-Stop
 
         while (isPaused && isProcessing) {
             await new Promise(resolve => setTimeout(resolve, 500)); 
@@ -434,7 +430,6 @@ async function processQueue() {
                         <td colspan="4" class="txt-error">${errorMsg}</td>
                     `;
                 } else {
-                    // MENGHAPUS loading="lazy" agar gambar langsung dimuat
                     let imgTag = data.avatar ? `<img src="${data.avatar}">` : `-`;
                     
                     let statusKorblox = data.korblox ? `<span class="txt-yes">Yes</span>` : `<span class="txt-no">No</span>`;
@@ -464,6 +459,8 @@ async function processQueue() {
                 }
             } catch (e) {
                 if (e.name === 'AbortError') {
+                    // Tampilkan dibatalkan, lalu keluar dari loop.
+                    // currentIndex saat ini sudah menunjuk ke baris yang dibatalkan ini.
                     tr.innerHTML = `
                         <td class="col-num">${numStr}</td>
                         <td colspan="7" style="color:var(--warning); text-align:center;">Dibatalkan.</td>
@@ -483,12 +480,14 @@ async function processQueue() {
         }
     }
     
+    // Setelah loop selesai, periksa apakah sudah mentok di akhir
     if (isProcessing && currentIndex >= currentLines.length - 1) {
         isProcessing = false;
         isStopped = false;
-        currentIndex = currentLines.length; 
+        currentIndex = currentLines.length; // Pastikan mentok
         updateButtons();
     } else if (!isProcessing) {
+        // Jika berhenti karena di-Stop
         updateButtons();
     }
 }
@@ -553,7 +552,6 @@ def filter_account():
         user_data = user_req.json()['data'][0]
         user_id = user_data['id']
         
-        # Waktu jeda dipercepat sedikit dari 0.2 ke 0.1
         time.sleep(0.1)
         
         info_req = session.get(f'https://users.roblox.com/v1/users/{user_id}')
