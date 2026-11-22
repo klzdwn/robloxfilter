@@ -75,8 +75,10 @@ HTML_PAGE = """
     }
     textarea:focus { outline: none; border-color: var(--primary); }
 
-    .btn-group {
-        display: flex;
+    /* --- LAYOUT TOMBOL 2 BARIS (GRID) --- */
+    .btn-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 2 Kolom */
         gap: 8px;
     }
 
@@ -91,24 +93,28 @@ HTML_PAGE = """
         font-family: 'Inter', sans-serif;
         font-size: 12px;
         transition: all 0.2s;
-        flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
         height: 38px;
+        width: 100%;
     }
 
     button:hover:not(:disabled), .btn-upload:hover { background-color: var(--primary-hover); }
     button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
+    
     .btn-danger { background-color: var(--danger); }
     .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
+    
+    .btn-success { background-color: var(--success); }
+    .btn-success:hover:not(:disabled) { background-color: #059669; }
 
     input[type="file"] { display: none; }
 
     /* FIX TEKS PERINGATAN */
     .warning-text {
         display: flex;
-        align-items: flex-start; /* Agar ikon sejajar dengan baris pertama teks */
+        align-items: flex-start;
         justify-content: center;
         gap: 6px;
         font-size: 11px;
@@ -124,7 +130,7 @@ HTML_PAGE = """
         background: var(--panel-bg);
         border-radius: 8px;
         border: 1px solid var(--border-color);
-        overflow: hidden; /* Tidak ada scroll horizontal */
+        overflow: hidden; 
     }
 
     table {
@@ -168,7 +174,14 @@ HTML_PAGE = """
     .txt-yes { color: var(--success); font-weight: 700; }
     .txt-no { color: var(--danger); }
     .txt-rap { color: var(--purple); }
-    .txt-error { color: var(--danger); font-style: italic; font-weight: 600;}
+    
+    /* TEKS EMAIL DIPERKECIL */
+    .txt-error { 
+        color: var(--danger); 
+        font-style: italic; 
+        font-weight: 500;
+        font-size: 10px; /* Dikecilkan dari sebelumnya */
+    }
 
     /* Sembunyikan kolom Created di HP agar muat, tampilkan di PC */
     .col-date { display: none; }
@@ -201,10 +214,6 @@ HTML_PAGE = """
         padding: 8px 15px; border-radius: 6px; font-weight: 600;
         font-size: 13px; cursor: pointer; width: 100%;
     }
-
-    @media (max-width: 600px) {
-        .btn-group { flex-direction: column; }
-    }
 </style>
 </head>
 <body>
@@ -218,14 +227,17 @@ HTML_PAGE = """
     <div class="input-group">
         <textarea id="data" placeholder="kalzatore:99999999:38.114.120.212"></textarea>
         
-        <div class="btn-group">
+        <!-- 4 TOMBOL DALAM 2 BARIS -->
+        <div class="btn-grid">
             <label for="fileInput" class="btn-upload">📁 Upload .txt</label>
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
+            
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
             <button id="stopBtn" class="btn-danger" onclick="stopFilter()" disabled>Stop</button>
+            <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
         </div>
 
-        <!-- Teks Peringatan Fixed -->
+        <!-- Teks Peringatan -->
         <div class="warning-text">
             <span class="icon">⚠️</span> 
             <span>Tetap stay di website. Jika keluar, sistem akan menerapkan fitur jeda otomatis.</span>
@@ -265,12 +277,20 @@ HTML_PAGE = """
 
 <script>
 let isProcessing = false;
+let isPaused = false; // Variabel untuk menandai apakah sedang dijeda karena pindah tab
+let isStopped = false; // Variabel untuk menandai apakah di-stop oleh user
 let currentAbortController = null;
-let isPaused = false;
+
+// Variabel untuk menyimpan posisi antrean saat ini
+let currentLines = [];
+let currentIndex = 0;
 
 document.addEventListener("visibilitychange", function() {
-    if (document.hidden) { isPaused = true; } 
-    else { isPaused = false; }
+    if (document.hidden) { 
+        isPaused = true; 
+    } else { 
+        isPaused = false; 
+    }
 });
 
 function showModal(title, message) {
@@ -294,59 +314,100 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
+// --- FITUR STOP ---
 function stopFilter() {
     if (currentAbortController) currentAbortController.abort();
     isProcessing = false;
     isPaused = false;
+    isStopped = true; // Tandai bahwa ini berhenti di tengah jalan
     updateButtons();
+}
+
+// --- FITUR LANJUTKAN ---
+function resumeFilter() {
+    if (isProcessing) return; // Kalau sedang jalan, abaikan
+    
+    if (currentIndex >= currentLines.length) {
+        showModal("Selesai", "Semua data sudah diproses.");
+        return;
+    }
+
+    isStopped = false;
+    isPaused = false;
+    isProcessing = true;
+    
+    // Panggil proses filter dari index terakhir
+    processQueue();
 }
 
 function updateButtons() {
     const btnFilter = document.getElementById('filterBtn');
     const btnStop = document.getElementById('stopBtn');
+    const btnResume = document.getElementById('resumeBtn');
     
     if (isProcessing) {
         btnFilter.disabled = true;
         btnFilter.innerText = "Proses...";
         btnStop.disabled = false;
+        btnResume.disabled = true;
     } else {
         btnFilter.disabled = false;
         btnFilter.innerText = "Mulai Filter";
         btnStop.disabled = true;
+        
+        // Tombol Lanjutkan hanya aktif jika di-stop di tengah jalan dan belum habis datanya
+        if (isStopped && currentIndex < currentLines.length) {
+            btnResume.disabled = false;
+        } else {
+            btnResume.disabled = true;
+        }
     }
 }
 
-async function startFilter() {
+// Mulai dari awal
+function startFilter() {
     if (isProcessing) return;
     
-    const lines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
-    const tableBody = document.getElementById('tableBody');
-    
-    if(lines.length === 0) {
+    currentLines = document.getElementById('data').value.split('\\n').filter(l => l.trim());
+    if(currentLines.length === 0) {
         showModal("Data Kosong", "Masukkan data terlebih dahulu!");
         return;
     }
     
-    tableBody.innerHTML = '';
+    document.getElementById('tableBody').innerHTML = '';
+    currentIndex = 0; // Reset index ke awal
+    isStopped = false;
+    isPaused = false;
     isProcessing = true;
+    
     updateButtons();
+    processQueue();
+}
 
-    let counter = 1;
+// Fungsi utama antrean (bisa dipanggil dari Mulai atau Lanjutkan)
+async function processQueue() {
+    const tableBody = document.getElementById('tableBody');
 
-    for (let line of lines) {
-        if (!isProcessing) break;
+    // Looping dari currentIndex (jika baru mulai, dari 0. jika lanjut, dari index terakhir)
+    for (let i = currentIndex; i < currentLines.length; i++) {
+        currentIndex = i; // Simpan posisi index saat ini
 
+        if (!isProcessing) break; // Berhenti jika tombol Stop ditekan
+
+        // Fitur Jeda Otomatis jika pindah tab
         while (isPaused && isProcessing) {
             await new Promise(resolve => setTimeout(resolve, 500)); 
         }
         if (!isProcessing) break; 
 
+        let line = currentLines[i];
         let parts = line.split(':');
+        
         if(parts.length >= 3) {
             let usn = parts[0].trim();
             let pw = parts[1].trim();
             let ip = parts[2].trim();
-            let numStr = counter.toString(); 
+            let numStr = (i + 1).toString(); // Nomor urut lanjut
             
             let isEmail = usn.includes('@'); 
 
@@ -360,7 +421,6 @@ async function startFilter() {
                 <td class="col-ip" colspan="4" style="color:var(--warning);">Loading...</td>
             `;
             tableBody.appendChild(tr);
-            counter++;
 
             try {
                 currentAbortController = new AbortController();
@@ -418,7 +478,7 @@ async function startFilter() {
                         <td class="col-num">${numStr}</td>
                         <td colspan="7" style="color:var(--warning); text-align:center;">Dibatalkan.</td>
                     `;
-                    break;
+                    break; // Keluar dari loop karena di stop
                 } else {
                     tr.innerHTML = `
                         <td class="col-num">${numStr}</td>
@@ -433,8 +493,16 @@ async function startFilter() {
         }
     }
     
-    isProcessing = false;
-    updateButtons();
+    // Jika loop selesai secara natural (tidak di stop)
+    if (isProcessing && currentIndex >= currentLines.length - 1) {
+        isProcessing = false;
+        isStopped = false;
+        currentIndex = currentLines.length; // Tandai sudah habis
+        updateButtons();
+    } else if (!isProcessing) {
+        // Jika berhenti karena di stop
+        updateButtons();
+    }
 }
 </script>
 </body>
