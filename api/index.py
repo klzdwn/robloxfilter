@@ -160,14 +160,16 @@ HTML_PAGE = """
     .col-usn { font-weight: 600; color: #fff; word-break: break-all; max-width: 80px;}
     .col-pw { color: var(--text-muted); word-break: break-all; max-width: 70px;}
     
-    /* Kolom IP/Negara dibuat agar teks tanggal turun ke bawahnya */
     .col-ip { color: var(--warning); width: 70px; text-align: center;}
-    .date-sub { 
+    
+    /* FIX CSS UNTUK TANGGAL DI HP */
+    .date-mobile { 
         display: block; 
         font-size: 9px; 
         color: var(--text-muted); 
-        margin-top: 3px; 
+        margin-top: 4px; 
         font-weight: 400;
+        white-space: nowrap;
     }
     
     .col-status { min-width: 100px; line-height: 1.3;}
@@ -187,15 +189,17 @@ HTML_PAGE = """
         font-size: 10px;
     }
 
-    /* Sembunyikan header Created di HP karena tanggal sudah pindah ke bawah Negara */
+    /* Default (HP): Sembunyikan kolom Created asli */
     .col-date { display: none; }
+
+    /* Media Query (PC): Tampilkan Created asli, sembunyikan tanggal mobile */
     @media (min-width: 600px) {
         .col-date { display: table-cell; color: var(--text-muted); }
         th, td { padding: 10px 8px; font-size: 12px; }
         .col-usn { max-width: none; }
         .col-pw { max-width: none; }
         .col-ip { text-align: left; width: auto;}
-        .date-sub { display: none; } /* Di PC, tanggal kembali ke kolom sendiri */
+        .date-mobile { display: none; } /* Sembunyikan di PC */
     }
 
     .modal-overlay {
@@ -457,7 +461,6 @@ async function processQueue() {
 
                     let rapText = data.rap > 0 ? `<span class="txt-rap">${data.rap.toLocaleString()}</span>` : `<span class="txt-no" style="font-size:10px;">Priv</span>`;
 
-                    // TANGGAL DIMASUKKAN KE DALAM SPAN DI BAWAH NEGARA
                     tr.innerHTML = `
                         <td class="col-num">${numStr}</td>
                         <td class="col-avatar">${imgTag}</td>
@@ -465,7 +468,7 @@ async function processQueue() {
                         <td class="col-pw">${pw}</td>
                         <td class="col-ip">
                             ${data.country}
-                            <span class="date-sub">${data.created}</span>
+                            <span class="date-mobile">${data.created}</span>
                         </td>
                         <td class="col-date">${data.created}</td>
                         <td class="col-status">${statusHtml}</td>
