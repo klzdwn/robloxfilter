@@ -44,7 +44,7 @@ HTML_PAGE = """
 
     .container {
         width: 100%;
-        max-width: 1000px;
+        max-width: 900px;
     }
 
     .header { margin-bottom: 20px; }
@@ -93,68 +93,50 @@ HTML_PAGE = """
     button:active:not(:disabled) { transform: scale(0.98); }
     button:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.7; }
 
-    /* --- LAYOUT GRID UNTUK CARD --- */
-    .results-grid {
-        display: grid;
-        grid-template-columns: 1fr; /* Mobile: 1 kolom */
-        gap: 15px;
+    /* --- LAYOUT LIST --- */
+    .results-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
 
-    @media (min-width: 768px) {
-        .results-grid {
-            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); /* PC: Grid */
-        }
-    }
-
-    /* --- STYLING CARD BARU (2 BARIS) --- */
-    .card {
+    /* --- STYLING BARIS (ROW) --- */
+    .result-row {
         background: var(--panel-bg);
         border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 16px;
+        border-radius: 8px;
+        padding: 10px 15px;
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        transition: transform 0.2s, border-color 0.2s;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        gap: 8px;
+        transition: background 0.2s;
     }
-    .card:hover { border-color: #475569; transform: translateY(-2px); }
+    .result-row:hover { background: #1e293b; border-color: #475569; }
 
-    /* Baris Atas: Text Info */
-    .card-top-row {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 12px;
-    }
-    .top-main-info {
-        font-size: 15px;
-        font-weight: 600;
-        color: #fff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .top-sub-info {
-        font-size: 12px;
-        color: var(--text-muted);
+    /* Baris Atas */
+    .row-top {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 8px;
     }
-    .top-sub-info span { color: #cbd5e1; font-weight: 500;}
-
-    /* Baris Bawah: Profile & Badges */
-    .card-bottom-row {
+    .row-top .separator { color: var(--text-muted); font-weight: 400; }
+    
+    /* Baris Bawah */
+    .row-bottom {
         display: flex;
         align-items: center;
         gap: 15px;
     }
 
-    .card-avatar {
-        width: 50px;
-        height: 50px;
+    .row-avatar {
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         border: 2px solid var(--border-color);
         object-fit: cover;
@@ -162,26 +144,24 @@ HTML_PAGE = """
         flex-shrink: 0;
     }
 
-    .card-footer {
+    .row-badges {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
         flex: 1;
     }
 
-    /* --- BADGES (Stiker Status) --- */
+    /* --- BADGES (Stiker Status Kecil) --- */
     .status-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
         font-size: 11px;
         font-weight: 600;
         background: #0b1120;
-        padding: 4px 8px;
-        border-radius: 6px;
+        padding: 3px 8px;
+        border-radius: 4px;
         border: 1px solid var(--border-color);
+        white-space: nowrap;
     }
-    .status-item span { color: var(--text-muted); font-weight: 400; }
+    .status-item span { color: var(--text-muted); font-weight: 400; margin-right: 3px;}
 
     /* Warna Badge */
     .badge-yes { color: var(--success); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); }
@@ -189,8 +169,15 @@ HTML_PAGE = """
     .badge-rap { color: var(--purple); border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); }
     
     /* Loading & Error State */
-    .loading-box { text-align: center; padding: 20px; color: var(--warning); font-style: italic; font-size: 14px; }
-    .error-box { color: var(--danger); font-weight: bold; font-size: 13px; margin-top: 5px;}
+    .loading-box { text-align: center; padding: 15px; color: var(--warning); font-style: italic; font-size: 13px; }
+    .error-box { color: var(--danger); font-weight: bold; font-size: 13px; }
+
+    /* Responsif Mobile */
+    @media (max-width: 600px) {
+        .row-top { font-size: 12px; gap: 5px; }
+        .row-bottom { gap: 10px; }
+        .status-item { font-size: 10px; padding: 2px 6px; }
+    }
 
 </style>
 </head>
@@ -207,8 +194,8 @@ HTML_PAGE = """
         <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
     </div>
 
-    <!-- Container untuk Card -->
-    <div id="results" class="results-grid"></div>
+    <!-- Container untuk List -->
+    <div id="results" class="results-list"></div>
 </div>
 
 <script>
@@ -230,20 +217,21 @@ async function startFilter() {
             let pw = parts[1].trim();
             let ip = parts[2].trim();
             
-            // Buat Card Loading
-            let card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <div class="card-top-row">
-                    <div class="top-main-info">${usn} : ${pw} : ${ip}</div>
-                    <div class="top-sub-info">Mengecek data...</div>
+            // Buat Row Loading
+            let row = document.createElement('div');
+            row.className = 'result-row';
+            row.innerHTML = `
+                <div class="row-top">
+                    <span>${usn}</span> <span class="separator">:</span>
+                    <span>${pw}</span> <span class="separator">:</span>
+                    <span>${ip}</span>
                 </div>
-                <div class="card-bottom-row">
-                    <div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">⏳</div>
-                    <div class="loading-box" style="padding:0; text-align:left;">Memuat inventory...</div>
+                <div class="row-bottom">
+                    <div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">⏳</div>
+                    <div class="loading-box" style="padding:0; text-align:left;">Loading...</div>
                 </div>
             `;
-            resultsContainer.appendChild(card);
+            resultsContainer.appendChild(row);
 
             try {
                 let res = await fetch('/filter', {
@@ -255,51 +243,55 @@ async function startFilter() {
                 let data = await res.json();
                 
                 if (data.status === 'Not Found') {
-                    card.innerHTML = `
-                        <div class="card-top-row">
-                            <div class="top-main-info">${usn} : ${pw} : ${ip}</div>
-                            <div class="top-sub-info" style="color:var(--danger);">Username tidak ditemukan (Banned/Email)</div>
+                    row.innerHTML = `
+                        <div class="row-top">
+                            <span style="color:var(--danger)">${usn}</span> <span class="separator">:</span>
+                            <span>${pw}</span> <span class="separator">:</span>
+                            <span>${ip}</span>
+                            <span style="color:var(--danger); font-size: 11px;">(Banned / Not Found)</span>
                         </div>
-                        <div class="card-bottom-row">
-                            <div class="card-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger);">X</div>
+                        <div class="row-bottom">
+                            <div class="row-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger);">X</div>
                         </div>
                     `;
                 } else {
-                    let imgTag = data.avatar ? `<img src="${data.avatar}" class="card-avatar" loading="lazy">` : `<div class="card-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
+                    let imgTag = data.avatar ? `<img src="${data.avatar}" class="row-avatar" loading="lazy">` : `<div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
                     
                     // Format RAP
-                    let rapText = data.rap > 0 ? `${data.rap.toLocaleString()} RAP / ${data.limiteds} Ltd` : `Priv / None`;
+                    let rapText = data.rap > 0 ? `${data.rap.toLocaleString()} RAP` : `Priv/None`;
                     let rapClass = data.rap > 0 ? 'badge-rap' : 'badge-no';
 
-                    card.innerHTML = `
-                        <!-- BARIS ATAS: USN, PW, IP, TANGGAL -->
-                        <div class="card-top-row">
-                            <div class="top-main-info" title="${usn}:${pw}:${ip}">${usn} : ${pw} : ${ip}</div>
-                            <div class="top-sub-info">
-                                <div>Negara: <span>${data.country}</span></div>
-                                <div>Dibuat: <span>${data.created}</span></div>
-                                <div>RAP: <span style="color:var(--purple)">${rapText}</span></div>
-                            </div>
+                    row.innerHTML = `
+                        <!-- BARIS ATAS: USN:PW:IP:TANGGAL -->
+                        <div class="row-top">
+                            <span>${usn}</span> <span class="separator">:</span>
+                            <span>${pw}</span> <span class="separator">:</span>
+                            <span>${ip}</span> <span class="separator">:</span>
+                            <span style="color:var(--text-muted); font-weight:400;">${data.created}</span>
                         </div>
 
-                        <!-- BARIS BAWAH: PROFILE & BADGES -->
-                        <div class="card-bottom-row">
+                        <!-- BARIS BAWAH: AVATAR & BADGES -->
+                        <div class="row-bottom">
                             ${imgTag}
-                            <div class="card-footer">
+                            <div class="row-badges">
                                 <div class="status-item ${data.korblox ? 'badge-yes' : 'badge-no'}"><span>Korblox:</span> ${data.korblox ? 'Yes' : 'No'}</div>
                                 <div class="status-item ${data.korles ? 'badge-yes' : 'badge-no'}"><span>Korles:</span> ${data.korles ? 'Yes' : 'No'}</div>
                                 <div class="status-item ${data.malivinus ? 'badge-yes' : 'badge-no'}"><span>Malivinus:</span> ${data.malivinus ? 'Yes' : 'No'}</div>
-                                <div class="status-item ${data.crown_8bit ? 'badge-yes' : 'badge-no'}"><span>8Bit Crown:</span> ${data.crown_8bit ? 'Yes' : 'No'}</div>
+                                <div class="status-item ${data.crown_8bit ? 'badge-yes' : 'badge-no'}"><span>8Bit:</span> ${data.crown_8bit ? 'Yes' : 'No'}</div>
+                                <div class="status-item ${rapClass}"><span>RAP:</span> ${rapText}</div>
+                                <div class="status-item" style="color:#cbd5e1; border-color:#475569;"><span>Negara:</span> ${data.country}</div>
                             </div>
                         </div>
                     `;
                 }
             } catch (e) {
-                card.innerHTML = `
-                    <div class="card-top-row">
-                        <div class="top-main-info">${usn} : ${pw} : ${ip}</div>
+                row.innerHTML = `
+                    <div class="row-top">
+                        <span>${usn}</span> <span class="separator">:</span>
+                        <span>${pw}</span> <span class="separator">:</span>
+                        <span>${ip}</span>
                     </div>
-                    <div class="error-box">Terjadi kesalahan jaringan.</div>
+                    <div class="error-box">Kesalahan jaringan.</div>
                 `;
             }
         }
