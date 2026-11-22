@@ -100,7 +100,7 @@ HTML_PAGE = """
         justify-content: center;
         gap: 6px;
         box-sizing: border-box;
-        height: 42px; /* Tinggi fix biar rapi */
+        height: 42px;
     }
 
     button:hover:not(:disabled), .btn-upload:hover { background-color: var(--primary-hover); }
@@ -112,7 +112,7 @@ HTML_PAGE = """
 
     input[type="file"] { display: none; }
 
-    /* --- LAYOUT LIST SIMPEL (TANPA KOTAK BERLEBIHAN) --- */
+    /* --- LAYOUT LIST SIMPEL --- */
     .results-list {
         display: flex;
         flex-direction: column;
@@ -143,30 +143,25 @@ HTML_PAGE = """
         color: #fff;
     }
     
+    /* NOMOR URUT DIPERBARUI: Tanpa kotak biru, abu-abu */
     .row-number {
-        background: var(--primary);
-        color: white;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: 700;
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 600;
         margin-right: 4px;
         flex-shrink: 0;
     }
 
-    .main-text { font-weight: 600; }
-    .country-text { color: var(--warning); font-weight: 500; font-size: 11px; margin-left: auto; }
+    .main-text { font-weight: 600; color: #fff; }
+    .label-text { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+    .country-text { color: var(--warning); font-weight: 500; font-size: 12px; margin-left: auto; }
     
     /* Baris Bawah */
     .row-bottom {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding-left: 24px; /* Sejajar dengan teks atas */
+        padding-left: 20px;
     }
 
     .row-avatar {
@@ -183,7 +178,7 @@ HTML_PAGE = """
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         flex: 1;
         font-size: 11px;
     }
@@ -193,11 +188,9 @@ HTML_PAGE = """
         display: flex;
         align-items: center;
         gap: 4px;
-        color: var(--text-muted); /* Warna abu-abu untuk yang No */
+        color: var(--text-muted);
     }
     .stat-item b { font-weight: 600; }
-    
-    /* Warna kalau Yes */
     .stat-yes { color: var(--success); }
     .stat-rap { color: var(--purple); }
 
@@ -209,7 +202,7 @@ HTML_PAGE = """
         color: var(--danger);
         font-weight: 600;
         font-size: 12px;
-        padding-left: 24px;
+        padding-left: 20px;
     }
 
     /* Custom Modal */
@@ -324,6 +317,21 @@ function updateButtons() {
     }
 }
 
+// Fungsi Fetch dengan Auto-Retry (Mengatasi error saat pindah app)
+async function fetchWithRetry(url, options, retries = 3, backoff = 1000) {
+    try {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res;
+    } catch (e) {
+        if (retries > 0 && e.name !== 'AbortError') {
+            await new Promise(resolve => setTimeout(resolve, backoff));
+            return fetchWithRetry(url, options, retries - 1, backoff * 1.5);
+        }
+        throw e;
+    }
+}
+
 async function startFilter() {
     if (isProcessing) return;
     
@@ -349,15 +357,15 @@ async function startFilter() {
             let usn = parts[0].trim();
             let pw = parts[1].trim();
             let ip = parts[2].trim();
-            let numStr = counter.toString().padStart(2, '0');
+            let numStr = counter.toString(); // Hapus angka 0 di depan
             
             // Loading Row
             let row = document.createElement('div');
             row.className = 'result-row';
             row.innerHTML = `
                 <div class="row-top">
-                    <div class="row-number">${numStr}</div>
-                    <span class="main-text">${usn} : ${pw}</span>
+                    <span class="row-number">${numStr}.</span>
+                    <span class="label-text">USN:</span> <span class="main-text">${usn}</span> <span class="label-text">| PW:</span> <span class="main-text">${pw}</span>
                     <span class="country-text">Loading...</span>
                 </div>
             `;
@@ -368,7 +376,8 @@ async function startFilter() {
                 currentAbortController = new AbortController();
                 const signal = currentAbortController.signal;
 
-                let res = await fetch('/filter', {
+                // GUNAKAN fetchWithRetry
+                let res = await fetchWithRetry('/filter', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({usn: usn, ip: ip}),
@@ -380,8 +389,8 @@ async function startFilter() {
                 if (data.status === 'Not Found') {
                     row.innerHTML = `
                         <div class="row-top">
-                            <div class="row-number" style="background:var(--danger)">${numStr}</div>
-                            <span class="main-text" style="color:var(--danger)">${usn} : ${pw}</span>
+                            <span class="row-number" style="color:var(--danger)">${numStr}.</span>
+                            <span class="label-text" style="color:var(--danger)">USN:</span> <span class="main-text" style="color:var(--danger)">${usn}</span> <span class="label-text">| PW:</span> <span class="main-text" style="color:var(--danger)">${pw}</span>
                         </div>
                         <div class="not-found-box">
                             <div class="row-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:10px;">X</div>
@@ -391,7 +400,6 @@ async function startFilter() {
                 } else {
                     let imgTag = data.avatar ? `<img src="${data.avatar}" class="row-avatar" loading="lazy">` : `<div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">N/A</div>`;
                     
-                    // LOGIKA STATUS: Tetap tampilkan semua, bedakan warna
                     let korblox = data.korblox ? `<span class="stat-item stat-yes">● Korblox: <b>Yes</b></span>` : `<span class="stat-item">○ Korblox: <b>No</b></span>`;
                     let korles = data.korles ? `<span class="stat-item stat-yes">● Korles: <b>Yes</b></span>` : `<span class="stat-item">○ Korles: <b>No</b></span>`;
                     let mali = data.malivinus ? `<span class="stat-item stat-yes">● Malivinus: <b>Yes</b></span>` : `<span class="stat-item">○ Malivinus: <b>No</b></span>`;
@@ -401,9 +409,8 @@ async function startFilter() {
 
                     row.innerHTML = `
                         <div class="row-top">
-                            <div class="row-number">${numStr}</div>
-                            <span class="main-text">${usn} : ${pw}</span> 
-                            <span class="country-text">📍 ${data.country}</span>
+                            <span class="row-number">${numStr}.</span>
+                            <span class="label-text">USN:</span> <span class="main-text">${usn}</span> <span class="label-text">| PW:</span> <span class="main-text">${pw}</span> <span class="label-text">| IP:</span> <span class="main-text">${data.country}</span>
                         </div>
                         <div class="row-bottom">
                             ${imgTag}
@@ -422,16 +429,16 @@ async function startFilter() {
                 if (e.name === 'AbortError') {
                     row.innerHTML = `
                         <div class="row-top">
-                            <div class="row-number" style="background:var(--warning)">${numStr}</div>
-                            <span class="main-text" style="color:var(--warning)">Dibatalkan.</span>
+                            <span class="row-number" style="color:var(--warning)">${numStr}.</span>
+                            <span class="label-text" style="color:var(--warning)">Dibatalkan.</span>
                         </div>
                     `;
                     break;
                 } else {
                     row.innerHTML = `
                         <div class="row-top">
-                            <div class="row-number" style="background:var(--danger)">${numStr}</div>
-                            <span class="main-text" style="color:var(--danger)">Error jaringan.</span>
+                            <span class="row-number" style="color:var(--danger)">${numStr}.</span>
+                            <span class="main-text" style="color:var(--danger)">Gagal terhubung ke server (Error Jaringan).</span>
                         </div>
                     `;
                 }
