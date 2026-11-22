@@ -401,12 +401,15 @@ async function processQueue() {
         if (!isProcessing) break; 
 
         let line = currentLines[i];
-        let parts = line.split(':');
         
-        if(parts.length >= 3) {
-            let usn = parts[0].trim();
-            let pw = parts[1].trim();
-            let ip = parts[2].trim();
+        // --- PEMISAHAN USN, PW, IP (Mendukung IPv6) ---
+        let firstColon = line.indexOf(':');
+        let secondColon = line.indexOf(':', firstColon + 1);
+        
+        if(firstColon !== -1 && secondColon !== -1) {
+            let usn = line.substring(0, firstColon).trim();
+            let pw = line.substring(firstColon + 1, secondColon).trim();
+            let ip = line.substring(secondColon + 1).trim(); // Ambil semua sisa teks sebagai IP
             let numStr = (i + 1).toString(); 
             
             let isEmail = usn.includes('@'); 
@@ -541,25 +544,19 @@ def filter_account():
         'Accept': 'application/json'
     })
     
-    # --- DETEKSI IP (Pakai ipinfo.io) ---
+    # --- DETEKSI IP (Pakai ipwho.is) ---
     country_name = "Unknown"
     if ip_addr:
         try:
             ip_addr = ip_addr.strip().rstrip('.')
             
-            # ipinfo.io sangat jarang memblokir request otomatis
-            ip_req = requests.get(f'https://ipinfo.io/{ip_addr}/json', timeout=5)
+            # ipwho.is mendukung IPv4 dan IPv6
+            ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
             
             if ip_req.status_code == 200:
                 req_json = ip_req.json()
-                country_code = req_json.get('country', 'Unknown')
-                
-                # ipinfo.io memberikan kode negara (ID, US, dll) atau 'bogon' jika IP lokal
-                if country_code == 'bogon':
-                    country_name = "IP Lokal"
-                elif country_code != 'Unknown':
-                    # Ubah kode negara jadi nama (opsional, biar jelas)
-                    country_name = country_code 
+                if req_json.get('success'):
+                    country_name = req_json.get('country', 'Unknown')
                 else:
                     country_name = "Not Found"
             else:
