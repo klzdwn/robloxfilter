@@ -544,27 +544,21 @@ def filter_account():
     })
     
     country_name = "Unknown"
-    if ip_addr:
-        try:
-            # --- PERBAIKAN DETEKSI IPV4 / IPV6 ---
-            # Cek apakah format IP-nya valid (IPv4 atau IPv6)
-            ip_obj = ipaddress.ip_address(ip_addr)
+if ip_addr:
+    try:
+        # Pakai ipinfo.io yang lebih stabil
+        ip_req = requests.get(f'https://ipinfo.io/{ip_addr}/json', timeout=5)
+        if ip_req.status_code == 200:
+            data_ip = ip_req.json()
+            country_name = data_ip.get('country', 'Unknown')
             
-            if ip_obj.version == 6:
-                # API ip-api.com versi HTTP tidak mendukung IPv6.
-                # Kita gunakan API alternatif gratis (ipwho.is) yang mendukung IPv6 via HTTPS.
-                ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
-                if ip_req.status_code == 200 and ip_req.json().get('success'):
-                    country_name = ip_req.json().get('country', 'Unknown')
-            else:
-                # IPv4 pakai API lama
-                ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
-                if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
-                    country_name = ip_req.json().get('country', 'Unknown')
-        except ValueError:
-            country_name = "Format IP Salah"
-        except Exception:
-            country_name = "IP Error"
+            # (Opsional) Ubah kode negara jadi nama negara
+            if country_name == 'ID': country_name = 'Indonesia'
+            elif country_name == 'US': country_name = 'United States'
+            elif country_name == 'PH': country_name = 'Philippines'
+            # dst...
+    except Exception:
+        country_name = "IP Error"
     
     try:
         user_req = session.post('https://users.roblox.com/v1/usernames/users', json={
