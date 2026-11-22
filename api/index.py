@@ -118,7 +118,7 @@ HTML_PAGE = """
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         font-size: 13px;
         font-weight: 600;
         color: #fff;
@@ -126,6 +126,7 @@ HTML_PAGE = """
         padding-bottom: 8px;
     }
     .row-top .separator { color: var(--text-muted); font-weight: 400; }
+    .row-top .label { color: var(--text-muted); font-weight: 500; }
     
     /* Baris Bawah */
     .row-bottom {
@@ -222,9 +223,9 @@ async function startFilter() {
             row.className = 'result-row';
             row.innerHTML = `
                 <div class="row-top">
-                    <span>${usn}</span> <span class="separator">:</span>
-                    <span>${pw}</span> <span class="separator">:</span>
-                    <span>${ip}</span>
+                    <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
+                    <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
+                    <span class="label">IP:</span> <span>${ip}</span>
                 </div>
                 <div class="row-bottom">
                     <div class="row-avatar" style="display:flex; align-items:center; justify-content:center;">⏳</div>
@@ -245,10 +246,10 @@ async function startFilter() {
                 if (data.status === 'Not Found') {
                     row.innerHTML = `
                         <div class="row-top">
-                            <span style="color:var(--danger)">${usn}</span> <span class="separator">:</span>
-                            <span>${pw}</span> <span class="separator">:</span>
-                            <span>${ip}</span>
-                            <span style="color:var(--danger); font-size: 11px;">(Banned / Not Found)</span>
+                            <span class="label" style="color:var(--danger)">USN:</span> <span>${usn}</span> <span class="separator">|</span>
+                            <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
+                            <span class="label">IP:</span> <span>${ip}</span> 
+                            <span style="color:var(--danger); font-size: 11px; margin-left:auto;">(Banned / Not Found)</span>
                         </div>
                         <div class="row-bottom">
                             <div class="row-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--danger);">X</div>
@@ -262,12 +263,12 @@ async function startFilter() {
                     let rapClass = data.rap > 0 ? 'badge-rap' : 'badge-no';
 
                     row.innerHTML = `
-                        <!-- BARIS ATAS: USN:PW:IP:TANGGAL -->
+                        <!-- BARIS ATAS: USN, PW, IP (Negara), TANGGAL -->
                         <div class="row-top">
-                            <span>${usn}</span> <span class="separator">:</span>
-                            <span>${pw}</span> <span class="separator">:</span>
-                            <span>${ip}</span> <span class="separator">:</span>
-                            <span style="color:var(--text-muted); font-weight:400;">${data.created}</span>
+                            <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
+                            <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
+                            <span class="label">IP:</span> <span>${data.country}</span> <span class="separator">|</span>
+                            <span class="label">Created:</span> <span>${data.created}</span>
                         </div>
 
                         <!-- BARIS BAWAH: AVATAR & BADGES -->
@@ -279,7 +280,6 @@ async function startFilter() {
                                 <div class="status-item ${data.malivinus ? 'badge-yes' : 'badge-no'}"><span>Malivinus:</span> ${data.malivinus ? 'Yes' : 'No'}</div>
                                 <div class="status-item ${data.crown_8bit ? 'badge-yes' : 'badge-no'}"><span>8Bit:</span> ${data.crown_8bit ? 'Yes' : 'No'}</div>
                                 <div class="status-item ${rapClass}"><span>RAP:</span> ${rapText}</div>
-                                <div class="status-item" style="color:#cbd5e1; border-color:#475569;"><span>Negara:</span> ${data.country}</div>
                             </div>
                         </div>
                     `;
@@ -287,9 +287,9 @@ async function startFilter() {
             } catch (e) {
                 row.innerHTML = `
                     <div class="row-top">
-                        <span>${usn}</span> <span class="separator">:</span>
-                        <span>${pw}</span> <span class="separator">:</span>
-                        <span>${ip}</span>
+                        <span class="label">USN:</span> <span>${usn}</span> <span class="separator">|</span>
+                        <span class="label">PW:</span> <span>${pw}</span> <span class="separator">|</span>
+                        <span class="label">IP:</span> <span>${ip}</span>
                     </div>
                     <div class="error-box">Kesalahan jaringan.</div>
                 `;
