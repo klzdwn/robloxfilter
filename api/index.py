@@ -51,6 +51,7 @@ HTML_PAGE = """
     .header h2 { font-size: 20px; font-weight: 700; color: #fff; }
     .header p { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
 
+    /* Input Group */
     .input-group {
         background: var(--panel-bg);
         padding: 12px;
@@ -179,6 +180,7 @@ HTML_PAGE = """
 
     .date-mobile { display: block; font-size: 9px; color: var(--text-muted); margin-top: 3px; font-weight: 400; white-space: nowrap; }
 
+    /* Sembunyikan kolom created di HP */
     .col-date { display: none; }
     @media (min-width: 600px) {
         .col-date { display: table-cell; color: var(--text-muted); }
@@ -189,28 +191,7 @@ HTML_PAGE = """
         .date-mobile { display: none; } 
     }
 
-    /* Folder Selector */
-    .folder-selector {
-        background: var(--panel-bg);
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .folder-selector select {
-        flex: 1;
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid var(--border-color);
-        background: #0b1120;
-        color: var(--text-main);
-        font-family: 'Inter', sans-serif;
-        font-size: 13px;
-    }
-
+    /* Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
@@ -231,6 +212,19 @@ HTML_PAGE = """
         background: var(--primary); color: white; border: none;
         padding: 8px 15px; border-radius: 6px; font-weight: 600;
         font-size: 13px; cursor: pointer; width: 100%;
+    }
+    
+    /* Selector Folder */
+    .folder-select {
+        width: 100%;
+        padding: 10px;
+        background: #0b1120;
+        color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        margin-bottom: 12px;
     }
 </style>
 </head>
@@ -256,6 +250,7 @@ HTML_PAGE = """
         <div class="btn-grid">
             <button id="pauseBtn" class="btn-warning" onclick="pauseFilter()" disabled>Jeda</button>
             <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
+            <!-- Tombol Simpan dan Pindah Halaman -->
             <button class="btn-save" onclick="saveAndRedirect()">💾 Simpan & Lihat Riwayat</button>
             <button class="btn-secondary" onclick="toggleHistoryPage()">📂 Halaman Riwayat</button>
         </div>
@@ -292,13 +287,10 @@ HTML_PAGE = """
         <button class="btn-secondary" style="width: auto; padding: 6px 15px;" onclick="toggleHistoryPage()">⬅️ Kembali</button>
     </div>
 
-    <!-- Folder Selector -->
-    <div class="folder-selector">
-        <label style="font-size:12px; color:var(--text-muted);">Folder:</label>
-        <select id="folderSelect" onchange="renderHistoryTable()">
-            <option value="">-- Pilih Folder --</option>
-        </select>
-    </div>
+    <!-- Dropdown untuk pilih folder -->
+    <select id="folderSelect" class="folder-select" onchange="renderHistoryTable()">
+        <option value="">-- Pilih Folder Riwayat --</option>
+    </select>
 
     <div class="table-wrapper">
         <table id="historyTable">
@@ -338,11 +330,23 @@ let currentAbortController = null;
 let currentLines = [];
 let currentIndex = 0;
 let savedResults = []; 
-let currentFolderName = "Default"; // Default folder name
+let currentFolderName = "Default"; // Variabel untuk nama folder
 
-// Saat halaman dimuat
+// Saat halaman dimuat, cek apakah ada data tersimpan (format lama bisa jadi array)
 window.onload = function() {
-    loadFolders();
+    let stored = localStorage.getItem('robloxFilterHistory');
+    if (stored) {
+        try {
+            let parsed = JSON.parse(stored);
+            if(!Array.isArray(parsed)) {
+                // Jika format object (folder), biarkan. 
+            } else {
+                // Jika masih format array lama, ubah ke object
+                let newObj = { "Default": parsed };
+                localStorage.setItem('robloxFilterHistory', JSON.stringify(newObj));
+            }
+        } catch(e) {}
+    }
 }
 
 document.addEventListener("visibilitychange", function() {
@@ -364,9 +368,9 @@ function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    // Ambil nama file tanpa ekstensi .txt sebagai nama folder
-    currentFolderName = file.name.replace(/\\.txt$/i, '');
-    
+    // Ambil nama file tanpa .txt untuk dijadikan nama folder
+    currentFolderName = file.name.replace(/\\.txt$/i, ''); 
+
     const reader = new FileReader();
     reader.onload = function(e) {
         document.getElementById('data').value = e.target.result;
@@ -428,7 +432,12 @@ function startFilter() {
     isPaused = false;
     isProcessing = true;
     currentAbortController = null;
-    savedResults = []; 
+    savedResults = []; // Reset sesi sementara
+    
+    // Jika tidak upload file txt (ketik manual), default ke "Manual_Input"
+    if(currentFolderName === "Default" || currentFolderName === "") {
+        currentFolderName = "Manual_Input_" + new Date().getTime().toString().slice(-4);
+    }
     
     updateButtons();
     processQueue();
@@ -551,27 +560,33 @@ async function processQueue() {
     }
 }
 
-// FITUR SIMPAN DENGAN NAMA FOLDER
+// FITUR SIMPAN & PINDAH HALAMAN (DENGAN FOLDER)
 function saveAndRedirect() {
     if (savedResults.length === 0) {
         showModal("Kosong", "Belum ada data yang selesai diproses untuk disimpan.");
         return;
     }
     
-    let historyData = JSON.parse(localStorage.getItem('robloxFilterHistory') || '{}');
+    let existing = localStorage.getItem('robloxFilterHistory');
+    let historyData = existing ? JSON.parse(existing) : {};
     
-    // Jika folder sudah ada, timpa. Jika belum, buat baru.
+    // Pastikan format object
+    if (Array.isArray(historyData)) {
+        historyData = { "Default": historyData };
+    }
+    
+    // Simpan berdasarkan nama folder
     historyData[currentFolderName] = savedResults;
     
     localStorage.setItem('robloxFilterHistory', JSON.stringify(historyData));
     
-    showModal("Berhasil", `Riwayat disimpan di folder: <b>${currentFolderName}</b>`);
+    showModal("Berhasil", `Riwayat disimpan ke folder: <b>${currentFolderName}</b>`);
     
     // Bersihkan halaman utama
     document.getElementById('tableBody').innerHTML = '';
     document.getElementById('data').value = '';
     savedResults = [];
-    currentFolderName = "Default";
+    currentFolderName = "Default"; // Reset
 }
 
 // FITUR BUKA/TUTUP HALAMAN RIWAYAT
@@ -580,31 +595,50 @@ function toggleHistoryPage() {
     const historyPage = document.getElementById('historyPage');
     
     if (historyPage.style.display === 'none') {
+        // Buka Halaman Riwayat
         mainPage.style.display = 'none';
         historyPage.style.display = 'block';
-        loadFolders();
+        loadFolders(); // Load dropdown folder
     } else {
+        // Kembali ke Halaman Utama
         historyPage.style.display = 'none';
         mainPage.style.display = 'block';
     }
 }
 
+// Muat daftar folder ke dropdown
 function loadFolders() {
-    let historyData = JSON.parse(localStorage.getItem('robloxFilterHistory') || '{}');
-    let folders = Object.keys(historyData);
-    const select = document.getElementById('folderSelect');
+    let existing = localStorage.getItem('robloxFilterHistory');
+    let historyData = existing ? JSON.parse(existing) : {};
     
-    select.innerHTML = '<option value="">-- Pilih Folder --</option>';
-    folders.forEach(folder => {
+    if (Array.isArray(historyData)) {
+        historyData = { "Default": historyData };
+    }
+
+    let select = document.getElementById('folderSelect');
+    select.innerHTML = '<option value="">-- Pilih Folder Riwayat --</option>';
+    
+    let keys = Object.keys(historyData);
+    
+    if(keys.length === 0) {
+        document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada riwayat tersimpan.</td></tr>`;
+        return;
+    }
+
+    keys.forEach(folder => {
         let option = document.createElement('option');
         option.value = folder;
         option.innerText = folder;
         select.appendChild(option);
     });
+    
+    // Otomatis pilih folder pertama
+    select.value = keys[0];
+    renderHistoryTable();
 }
 
 function renderHistoryTable() {
-    const folder = document.getElementById('folderSelect').value;
+    let folder = document.getElementById('folderSelect').value;
     const tableBody = document.getElementById('historyTableBody');
     
     if (!folder) {
@@ -612,15 +646,15 @@ function renderHistoryTable() {
         return;
     }
 
-    let historyData = JSON.parse(localStorage.getItem('robloxFilterHistory') || '{}');
-    let dataArray = historyData[folder] || [];
+    let existing = localStorage.getItem('robloxFilterHistory');
+    let historyData = existing ? JSON.parse(existing) : {};
     
-    tableBody.innerHTML = ''; 
-
-    if(dataArray.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color:var(--text-muted);">Folder ini kosong.</td></tr>`;
-        return;
+    if (Array.isArray(historyData)) {
+        historyData = { "Default": historyData };
     }
+
+    let dataArray = historyData[folder] || [];
+    tableBody.innerHTML = ''; 
 
     dataArray.forEach(item => {
         let tr = document.createElement('tr');
@@ -718,12 +752,11 @@ def filter_account():
                     if req_json.get('success'):
                         country_name = req_json.get('country', 'Unknown')
                     else:
-                        # Jika ipwho.is gagal, coba Opsi 2
-                        raise Exception("ipwho.is failed")
+                        raise Exception("ipwho.is returned false")
                 else:
                     raise Exception("ipwho.is status error")
             except Exception:
-                # OPSI 2: ip-api.com (Fallback)
+                # OPSI 2: ip-api.com (Fallback jika Opsi 1 gagal)
                 try:
                     ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
                     if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
@@ -794,4 +827,27 @@ def filter_account():
         ltd_val = 0
         try:
             player_info = rolimons.player.get_player_info(user_id)
-            if player_info and 'rap' in player
+            if player_info and 'rap' in player_info:
+                rap_val = player_info['rap']
+                ltd_val = player_info.get('num_limiteds', 0)
+        except Exception as e:
+            print(f"Log Error RAP: {e}") 
+                
+        return jsonify({
+            'status': 'Found',
+            'country': country_name,
+            'created': created_date,
+            'avatar': avatar_url,
+            'korblox': has_korblox,
+            'korles': has_korblox and has_headless,
+            'rap': rap_val,
+            'limiteds': ltd_val,
+            'malivinus': has_malivinus,
+            'crown_8bit': has_crown_8bit
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'Error', 'country': country_name})
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
