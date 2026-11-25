@@ -189,24 +189,28 @@ HTML_PAGE = """
         .date-mobile { display: none; } 
     }
 
-    /* Folder Styles */
-    .folder-item {
+    /* Folder Selector */
+    .folder-selector {
         background: var(--panel-bg);
-        border: 1px solid var(--border-color);
+        padding: 10px;
         border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 15px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        cursor: pointer;
-        transition: background 0.2s;
+        gap: 10px;
     }
-    .folder-item:hover { background: #1e293b; border-color: #475569; }
-    .folder-name { font-weight: 600; color: #fff; font-size: 14px; }
-    .folder-count { font-size: 11px; color: var(--text-muted); }
+    .folder-selector select {
+        flex: 1;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: #0b1120;
+        color: var(--text-main);
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+    }
 
-    /* Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
@@ -245,14 +249,15 @@ HTML_PAGE = """
         <div class="btn-grid" style="margin-bottom: 8px;">
             <label for="fileInput" class="btn-upload">📁 Upload .txt</label>
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
+            
             <button id="filterBtn" onclick="startFilter()">Mulai Filter</button>
         </div>
 
         <div class="btn-grid">
             <button id="pauseBtn" class="btn-warning" onclick="pauseFilter()" disabled>Jeda</button>
             <button id="resumeBtn" class="btn-success" onclick="resumeFilter()" disabled>Lanjutkan</button>
-            <button class="btn-save" onclick="saveToFolder()">💾 Simpan ke Folder</button>
-            <button class="btn-secondary" onclick="toggleHistoryPage()">📂 Lihat Riwayat</button>
+            <button class="btn-save" onclick="saveAndRedirect()">💾 Simpan & Lihat Riwayat</button>
+            <button class="btn-secondary" onclick="toggleHistoryPage()">📂 Halaman Riwayat</button>
         </div>
 
         <div class="warning-text">
@@ -280,39 +285,37 @@ HTML_PAGE = """
     </div>
 </div>
 
-<!-- HALAMAN RIWAYAT (FOLDER LIST) -->
+<!-- HALAMAN RIWAYAT (TERPISAH) -->
 <div id="historyPage" class="container" style="display: none;">
     <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h2>📂 Riwayat Filter</h2>
         <button class="btn-secondary" style="width: auto; padding: 6px 15px;" onclick="toggleHistoryPage()">⬅️ Kembali</button>
     </div>
 
-    <!-- Daftar Folder -->
-    <div id="folderList"></div>
+    <!-- Folder Selector -->
+    <div class="folder-selector">
+        <label style="font-size:12px; color:var(--text-muted);">Folder:</label>
+        <select id="folderSelect" onchange="renderHistoryTable()">
+            <option value="">-- Pilih Folder --</option>
+        </select>
+    </div>
 
-    <!-- Isi Folder (Tabel) -->
-    <div id="folderContent" style="display: none; margin-top: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 id="currentFolderName" style="font-size: 14px; color: var(--primary);"></h3>
-            <button class="btn-secondary" style="width: auto; padding: 4px 10px; font-size: 11px;" onclick="closeFolder()">Tutup</button>
-        </div>
-        <div class="table-wrapper">
-            <table id="historyTable">
-                <thead>
-                    <tr>
-                        <th class="col-num">#</th>
-                        <th class="col-avatar">PFP</th>
-                        <th class="col-usn">USN</th>
-                        <th class="col-pw">PW</th>
-                        <th class="col-ip">Negara</th>
-                        <th class="col-date">Created</th>
-                        <th class="col-status">Status Item</th>
-                        <th class="col-rap">RAP</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody"></tbody>
-            </table>
-        </div>
+    <div class="table-wrapper">
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th class="col-num">#</th>
+                    <th class="col-avatar">PFP</th>
+                    <th class="col-usn">USN</th>
+                    <th class="col-pw">PW</th>
+                    <th class="col-ip">Negara</th>
+                    <th class="col-date">Created</th>
+                    <th class="col-status">Status Item</th>
+                    <th class="col-rap">RAP</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+        </table>
     </div>
 </div>
 
@@ -335,11 +338,11 @@ let currentAbortController = null;
 let currentLines = [];
 let currentIndex = 0;
 let savedResults = []; 
-let currentFileName = "Manual_Input"; // Nama folder default
+let currentFolderName = "Default"; // Default folder name
 
 // Saat halaman dimuat
 window.onload = function() {
-    // Tidak auto-load tabel utama, hanya siapkan data
+    loadFolders();
 }
 
 document.addEventListener("visibilitychange", function() {
@@ -360,8 +363,9 @@ function closeModal() {
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    // Ambil nama file tanpa ekstensi .txt untuk nama folder
-    currentFileName = file.name.replace('.txt', '');
+    
+    // Ambil nama file tanpa ekstensi .txt sebagai nama folder
+    currentFolderName = file.name.replace(/\\.txt$/i, '');
     
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -424,7 +428,7 @@ function startFilter() {
     isPaused = false;
     isProcessing = true;
     currentAbortController = null;
-    savedResults = []; // Reset sesi sementara
+    savedResults = []; 
     
     updateButtons();
     processQueue();
@@ -547,33 +551,27 @@ async function processQueue() {
     }
 }
 
-// FITUR SIMPAN KE FOLDER
-function saveToFolder() {
+// FITUR SIMPAN DENGAN NAMA FOLDER
+function saveAndRedirect() {
     if (savedResults.length === 0) {
         showModal("Kosong", "Belum ada data yang selesai diproses untuk disimpan.");
         return;
     }
     
-    // Ambil data folder lama dari localStorage
-    let storedFolders = localStorage.getItem('robloxFilterFolders');
-    let folders = storedFolders ? JSON.parse(storedFolders) : {};
+    let historyData = JSON.parse(localStorage.getItem('robloxFilterHistory') || '{}');
     
-    // Simpan data ke folder sesuai nama file
-    // Jika folder sudah ada, timpa/replace isinya
-    folders[currentFileName] = {
-        name: currentFileName,
-        timestamp: new Date().toISOString(),
-        data: savedResults
-    };
+    // Jika folder sudah ada, timpa. Jika belum, buat baru.
+    historyData[currentFolderName] = savedResults;
     
-    localStorage.setItem('robloxFilterFolders', JSON.stringify(folders));
+    localStorage.setItem('robloxFilterHistory', JSON.stringify(historyData));
     
-    showModal("Berhasil", `Data berhasil disimpan ke folder "${currentFileName}"!`);
+    showModal("Berhasil", `Riwayat disimpan di folder: <b>${currentFolderName}</b>`);
     
     // Bersihkan halaman utama
     document.getElementById('tableBody').innerHTML = '';
     document.getElementById('data').value = '';
     savedResults = [];
+    currentFolderName = "Default";
 }
 
 // FITUR BUKA/TUTUP HALAMAN RIWAYAT
@@ -584,62 +582,47 @@ function toggleHistoryPage() {
     if (historyPage.style.display === 'none') {
         mainPage.style.display = 'none';
         historyPage.style.display = 'block';
-        renderFolderList();
+        loadFolders();
     } else {
         historyPage.style.display = 'none';
         mainPage.style.display = 'block';
-        closeFolder(); // Tutup folder jika masih terbuka
     }
 }
 
-// TAMPILKAN DAFTAR FOLDER
-function renderFolderList() {
-    let storedFolders = localStorage.getItem('robloxFilterFolders');
-    let folders = storedFolders ? JSON.parse(storedFolders) : {};
-    const folderListDiv = document.getElementById('folderList');
-    folderListDiv.innerHTML = '';
+function loadFolders() {
+    let historyData = JSON.parse(localStorage.getItem('robloxFilterHistory') || '{}');
+    let folders = Object.keys(historyData);
+    const select = document.getElementById('folderSelect');
     
-    // Sembunyikan konten folder
-    document.getElementById('folderContent').style.display = 'none';
-
-    if (Object.keys(folders).length === 0) {
-        folderListDiv.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada folder riwayat tersimpan.</div>`;
-        return;
-    }
-
-    // Urutkan berdasarkan timestamp terbaru
-    let sortedFolders = Object.values(folders).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    sortedFolders.forEach(folder => {
-        let div = document.createElement('div');
-        div.className = 'folder-item';
-        div.onclick = () => openFolder(folder.name);
-        div.innerHTML = `
-            <div>
-                <div class="folder-name">📁 ${folder.name}</div>
-                <div class="folder-count">${folder.data.length} akun • ${new Date(folder.timestamp).toLocaleDateString()}</div>
-            </div>
-            <div style="font-size: 20px; color: var(--text-muted);">›</div>
-        `;
-        folderListDiv.appendChild(div);
+    select.innerHTML = '<option value="">-- Pilih Folder --</option>';
+    folders.forEach(folder => {
+        let option = document.createElement('option');
+        option.value = folder;
+        option.innerText = folder;
+        select.appendChild(option);
     });
 }
 
-// BUKA ISI FOLDER
-function openFolder(folderName) {
-    let storedFolders = localStorage.getItem('robloxFilterFolders');
-    let folders = storedFolders ? JSON.parse(storedFolders) : {};
-    let folder = folders[folderName];
-    
-    if (!folder) return;
-
-    document.getElementById('currentFolderName').innerText = `📁 ${folder.name} (${folder.data.length} akun)`;
-    document.getElementById('folderContent').style.display = 'block';
-    
+function renderHistoryTable() {
+    const folder = document.getElementById('folderSelect').value;
     const tableBody = document.getElementById('historyTableBody');
+    
+    if (!folder) {
+        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color:var(--text-muted);">Pilih folder terlebih dahulu.</td></tr>`;
+        return;
+    }
+
+    let historyData = JSON.parse(localStorage.getItem('robloxFilterHistory') || '{}');
+    let dataArray = historyData[folder] || [];
+    
     tableBody.innerHTML = ''; 
 
-    folder.data.forEach(item => {
+    if(dataArray.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color:var(--text-muted);">Folder ini kosong.</td></tr>`;
+        return;
+    }
+
+    dataArray.forEach(item => {
         let tr = document.createElement('tr');
         
         if (item.is_error) {
@@ -681,10 +664,6 @@ function openFolder(folderName) {
         tableBody.appendChild(tr);
     });
 }
-
-function closeFolder() {
-    document.getElementById('folderContent').style.display = 'none';
-}
 </script>
 </body>
 </html>
@@ -725,41 +704,34 @@ def filter_account():
         'Accept': 'application/json'
     })
     
-    # --- DETEKSI IP DENGAN 2 OPSI API ---
+    # --- DETEKSI IP DENGAN 2 OPSI API (FALLBACK) ---
     country_name = "Unknown"
     if ip_addr:
         try:
             ip_addr = ip_addr.strip().rstrip('.')
             
-            # Opsi 1: ipwho.is
-            ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
-            if ip_req.status_code == 200:
-                req_json = ip_req.json()
-                if req_json.get('success'):
-                    country_name = req_json.get('country', 'Unknown')
-                else:
-                    country_name = "Not Found"
-            else:
-                country_name = "API Error"
-                
-            # Jika Opsi 1 gagal (API Error / Not Found), coba Opsi 2
-            if country_name in ["API Error", "Not Found"]:
-                try:
-                    ip_req2 = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
-                    if ip_req2.status_code == 200 and ip_req2.json().get('status') == 'success':
-                        country_name = ip_req2.json().get('country', 'Unknown')
+            # OPSI 1: ipwho.is
+            try:
+                ip_req = requests.get(f'https://ipwho.is/{ip_addr}', timeout=5)
+                if ip_req.status_code == 200:
+                    req_json = ip_req.json()
+                    if req_json.get('success'):
+                        country_name = req_json.get('country', 'Unknown')
                     else:
-                        # Jika Opsi 2 juga gagal, coba Opsi 3 (ipinfo.io)
-                        ip_req3 = requests.get(f'https://ipinfo.io/{ip_addr}/json', timeout=5)
-                        if ip_req3.status_code == 200:
-                            req_json3 = ip_req3.json()
-                            cc = req_json3.get('country', 'Unknown')
-                            if cc == 'bogon':
-                                country_name = "IP Lokal"
-                            elif cc != 'Unknown':
-                                country_name = cc
+                        # Jika ipwho.is gagal, coba Opsi 2
+                        raise Exception("ipwho.is failed")
+                else:
+                    raise Exception("ipwho.is status error")
+            except Exception:
+                # OPSI 2: ip-api.com (Fallback)
+                try:
+                    ip_req = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,country', timeout=5)
+                    if ip_req.status_code == 200 and ip_req.json().get('status') == 'success':
+                        country_name = ip_req.json().get('country', 'Unknown')
+                    else:
+                        country_name = "Not Found"
                 except Exception:
-                    pass # Biarkan country_name tetap sesuai hasil Opsi 1
+                    country_name = "API Error"
                     
         except Exception:
             country_name = "IP Error"
@@ -781,4 +753,45 @@ def filter_account():
         info_req = session.get(f'https://users.roblox.com/v1/users/{user_id}')
         created_date = "Unknown"
         if info_req.status_code == 200:
-            created
+            created_raw = info_req.json().get('created', '')
+            if created_raw:
+                created_date = created_raw.split('T')[0]
+
+        time.sleep(0.1)
+        
+        avatar_req = session.get(f'https://avatar.roblox.com/v1/users/{user_id}/avatar')
+        
+        has_headless = False
+        has_korblox = False
+        has_malivinus = False
+        has_crown_8bit = False
+        
+        if avatar_req.status_code == 200:
+            assets = avatar_req.json().get('assets', [])
+            for asset in assets:
+                asset_id = asset.get('id')
+                if asset_id in HEADLESS_IDS:
+                    has_headless = True
+                if asset_id in KORBLOX_IDS:
+                    has_korblox = True
+                if asset_id in MALIVINUS_IDS:
+                    has_malivinus = True
+                if asset_id in EIGHT_BIT_CROWN_IDS: 
+                    has_crown_8bit = True
+                    
+        time.sleep(0.1)
+        
+        thumb_req = session.get(f'https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=150x150&format=Png&isCircular=true')
+        avatar_url = None
+        if thumb_req.status_code == 200:
+            thumb_data = thumb_req.json().get('data', [])
+            if thumb_data:
+                avatar_url = thumb_data[0].get('imageUrl')
+        
+        time.sleep(0.1)
+        
+        rap_val = 0
+        ltd_val = 0
+        try:
+            player_info = rolimons.player.get_player_info(user_id)
+            if player_info and 'rap' in player
