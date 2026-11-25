@@ -114,6 +114,9 @@ HTML_PAGE = """
 
     .btn-secondary { background-color: #475569; }
     .btn-secondary:hover:not(:disabled) { background-color: #334155; }
+    
+    .btn-danger { background-color: var(--danger); color: white;}
+    .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
 
     input[type="file"] { display: none; }
 
@@ -201,22 +204,28 @@ HTML_PAGE = """
     .modal-overlay.active { opacity: 1; visibility: visible; }
     .modal-box {
         background: var(--panel-bg); border: 1px solid var(--border-color);
-        border-radius: 12px; padding: 20px; max-width: 300px; width: 90%;
+        border-radius: 12px; padding: 20px; max-width: 320px; width: 90%;
         text-align: center; transform: translateY(20px); transition: transform 0.3s ease;
     }
     .modal-overlay.active .modal-box { transform: translateY(0); }
     .modal-icon { font-size: 30px; margin-bottom: 10px; }
     .modal-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
     .modal-message { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+    .modal-btn-group { display: flex; gap: 8px; }
     .modal-btn {
         background: var(--primary); color: white; border: none;
         padding: 8px 15px; border-radius: 6px; font-weight: 600;
         font-size: 13px; cursor: pointer; width: 100%;
     }
     
-    /* Selector Folder */
+    /* Selector Folder (Diperbarui) */
+    .folder-actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
     .folder-select {
-        width: 100%;
+        flex: 1;
         padding: 10px;
         background: #0b1120;
         color: #fff;
@@ -224,7 +233,10 @@ HTML_PAGE = """
         border-radius: 6px;
         font-family: 'Inter', sans-serif;
         font-size: 13px;
-        margin-bottom: 12px;
+    }
+    @media (max-width: 600px) {
+        .folder-actions { flex-direction: column; }
+        #deleteFolderBtn { width: 100%; }
     }
 </style>
 </head>
@@ -287,10 +299,22 @@ HTML_PAGE = """
         <button class="btn-secondary" style="width: auto; padding: 6px 15px;" onclick="toggleHistoryPage()">⬅️ Kembali</button>
     </div>
 
-    <!-- Dropdown untuk pilih folder -->
-    <select id="folderSelect" class="folder-select" onchange="renderHistoryTable()">
-        <option value="">-- Pilih Folder Riwayat --</option>
-    </select>
+    <!-- Container Cek Folder -->
+    <div class="input-group" style="margin-bottom: 15px;">
+        <label style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; display: block;">Cek Folder Riwayat:</label>
+        
+        <div class="folder-actions">
+            <select id="folderSelect" class="folder-select" onchange="renderHistoryTable()">
+                <option value="">-- Pilih Folder Riwayat --</option>
+            </select>
+            <button id="deleteFolderBtn" class="btn-danger" onclick="confirmDeleteFolder()" style="display: none; padding: 0 15px;">🗑️ Hapus</button>
+        </div>
+
+        <div class="warning-text" style="justify-content: flex-start; margin-top: 8px; color: var(--text-muted);">
+            <span class="icon">ℹ️</span> 
+            <span>Pilih folder di atas untuk melihat hasil. Klik tombol <b>Hapus</b> jika ingin membersihkan folder ini secara permanen.</span>
+        </div>
+    </div>
 
     <div class="table-wrapper">
         <table id="historyTable">
@@ -311,13 +335,26 @@ HTML_PAGE = """
     </div>
 </div>
 
-<!-- Modal Pop-up -->
+<!-- Modal Alert -->
 <div class="modal-overlay" id="customModal">
     <div class="modal-box">
         <div class="modal-icon">⚠️</div>
         <div class="modal-title" id="modalTitle">Peringatan</div>
         <div class="modal-message" id="modalMessage">Pesan peringatan.</div>
         <button class="modal-btn" onclick="closeModal()">Oke</button>
+    </div>
+</div>
+
+<!-- Modal Confirm Delete -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-icon">🗑️</div>
+        <div class="modal-title">Hapus Folder?</div>
+        <div class="modal-message" id="confirmMessage">Apakah Anda yakin ingin menghapus folder ini beserta isinya?</div>
+        <div class="modal-btn-group">
+            <button class="modal-btn btn-danger" onclick="executeDelete()">Ya, Hapus</button>
+            <button class="modal-btn btn-secondary" onclick="closeConfirmModal()">Batal</button>
+        </div>
     </div>
 </div>
 
@@ -330,18 +367,15 @@ let currentAbortController = null;
 let currentLines = [];
 let currentIndex = 0;
 let savedResults = []; 
-let currentFolderName = "Default"; // Variabel untuk nama folder
+let currentFolderName = "Default"; 
+let folderToDelete = "";
 
-// Saat halaman dimuat, cek apakah ada data tersimpan (format lama bisa jadi array)
 window.onload = function() {
     let stored = localStorage.getItem('robloxFilterHistory');
     if (stored) {
         try {
             let parsed = JSON.parse(stored);
-            if(!Array.isArray(parsed)) {
-                // Jika format object (folder), biarkan. 
-            } else {
-                // Jika masih format array lama, ubah ke object
+            if(Array.isArray(parsed)) {
                 let newObj = { "Default": parsed };
                 localStorage.setItem('robloxFilterHistory', JSON.stringify(newObj));
             }
@@ -367,10 +401,7 @@ function closeModal() {
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    // Ambil nama file tanpa .txt untuk dijadikan nama folder
     currentFolderName = file.name.replace(/\\.txt$/i, ''); 
-
     const reader = new FileReader();
     reader.onload = function(e) {
         document.getElementById('data').value = e.target.result;
@@ -432,9 +463,8 @@ function startFilter() {
     isPaused = false;
     isProcessing = true;
     currentAbortController = null;
-    savedResults = []; // Reset sesi sementara
+    savedResults = []; 
     
-    // Jika tidak upload file txt (ketik manual), default ke "Manual_Input"
     if(currentFolderName === "Default" || currentFolderName === "") {
         currentFolderName = "Manual_Input_" + new Date().getTime().toString().slice(-4);
     }
@@ -560,7 +590,7 @@ async function processQueue() {
     }
 }
 
-// FITUR SIMPAN & PINDAH HALAMAN (DENGAN FOLDER)
+// FITUR SIMPAN & PINDAH HALAMAN
 function saveAndRedirect() {
     if (savedResults.length === 0) {
         showModal("Kosong", "Belum ada data yang selesai diproses untuk disimpan.");
@@ -570,23 +600,19 @@ function saveAndRedirect() {
     let existing = localStorage.getItem('robloxFilterHistory');
     let historyData = existing ? JSON.parse(existing) : {};
     
-    // Pastikan format object
     if (Array.isArray(historyData)) {
         historyData = { "Default": historyData };
     }
     
-    // Simpan berdasarkan nama folder
     historyData[currentFolderName] = savedResults;
-    
     localStorage.setItem('robloxFilterHistory', JSON.stringify(historyData));
     
     showModal("Berhasil", `Riwayat disimpan ke folder: <b>${currentFolderName}</b>`);
     
-    // Bersihkan halaman utama
     document.getElementById('tableBody').innerHTML = '';
     document.getElementById('data').value = '';
     savedResults = [];
-    currentFolderName = "Default"; // Reset
+    currentFolderName = "Default"; 
 }
 
 // FITUR BUKA/TUTUP HALAMAN RIWAYAT
@@ -595,12 +621,10 @@ function toggleHistoryPage() {
     const historyPage = document.getElementById('historyPage');
     
     if (historyPage.style.display === 'none') {
-        // Buka Halaman Riwayat
         mainPage.style.display = 'none';
         historyPage.style.display = 'block';
-        loadFolders(); // Load dropdown folder
+        loadFolders(); 
     } else {
-        // Kembali ke Halaman Utama
         historyPage.style.display = 'none';
         mainPage.style.display = 'block';
     }
@@ -616,12 +640,15 @@ function loadFolders() {
     }
 
     let select = document.getElementById('folderSelect');
+    let deleteBtn = document.getElementById('deleteFolderBtn');
+    
     select.innerHTML = '<option value="">-- Pilih Folder Riwayat --</option>';
     
     let keys = Object.keys(historyData);
     
     if(keys.length === 0) {
         document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px; color:var(--text-muted);">Belum ada riwayat tersimpan.</td></tr>`;
+        if(deleteBtn) deleteBtn.style.display = 'none';
         return;
     }
 
@@ -632,7 +659,8 @@ function loadFolders() {
         select.appendChild(option);
     });
     
-    // Otomatis pilih folder pertama
+    if(deleteBtn) deleteBtn.style.display = 'block';
+    
     select.value = keys[0];
     renderHistoryTable();
 }
@@ -697,6 +725,36 @@ function renderHistoryTable() {
         }
         tableBody.appendChild(tr);
     });
+}
+
+// --- FITUR HAPUS FOLDER ---
+function confirmDeleteFolder() {
+    let folder = document.getElementById('folderSelect').value;
+    if (!folder) return;
+    
+    folderToDelete = folder;
+    document.getElementById('confirmMessage').innerText = `Apakah Anda yakin ingin menghapus folder "${folder}" beserta isinya? Data yang dihapus tidak bisa dikembalikan.`;
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('active');
+    folderToDelete = "";
+}
+
+function executeDelete() {
+    if (!folderToDelete) return;
+    
+    let existing = localStorage.getItem('robloxFilterHistory');
+    let historyData = existing ? JSON.parse(existing) : {};
+    
+    if (historyData[folderToDelete]) {
+        delete historyData[folderToDelete];
+        localStorage.setItem('robloxFilterHistory', JSON.stringify(historyData));
+    }
+    
+    closeConfirmModal();
+    loadFolders(); // Refresh dropdown dan tabel
 }
 </script>
 </body>
